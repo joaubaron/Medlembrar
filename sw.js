@@ -1,13 +1,18 @@
 const CACHE_VERSION = '24.04.2026-1248';
 const CACHE_NAME = `medlembrar-${CACHE_VERSION}`;
-const ASSETS = ['./index.html', './manifest.json'];
+const ASSETS = [
+'./index.html',
+'./manifest.json',
+'./icons/icon-192.png',
+'./icons/icon-512.png'
+];
 
 // Instalação
 self.addEventListener('install', e => {
 e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
 self.skipWaiting();
 });
- 
+
 // Ativação - limpa caches antigos + agenda alarmes
 self.addEventListener('activate', e => {
 e.waitUntil(async () => {
@@ -36,19 +41,18 @@ const { medId, medName, dose, horario } = e.detail || {};
 if (medId && medName) {
 mostrarNotificacao(medName, dose, horario);
 } else {
-// Fallback: verifica todos os horários pendentes
 verificarHorariosPendentes();
 }
 });
 
-// Sincronização em segundo plano (Chrome/Edge)
+// Sincronização em segundo plano
 self.addEventListener('sync', e => {
 if (e.tag === 'medication-sync') {
 e.waitUntil(verificarHorariosPendentes());
 }
 });
 
-// Sincronização periódica (quando disponível)
+// Sincronização periódica
 self.addEventListener('periodicsync', e => {
 if (e.tag === 'medication-periodic') {
 e.waitUntil(verificarHorariosPendentes());
@@ -68,7 +72,7 @@ await agendarTodosAlarmes();
 // Clique na notificação
 self.addEventListener('notificationclick', e => {
 e.notification.close();
-e.waitUntil(clients.openWindow('./index.html'));
+e.waitUntil(clients.openWindow('.'));
 });
 
 // ============ FUNÇÕES PRINCIPAIS ============
@@ -76,11 +80,9 @@ e.waitUntil(clients.openWindow('./index.html'));
 async function verificarHorariosPendentes() {
 console.log('🔍 Verificando horários pendentes...');
 
-// Busca dados do IndexedDB ou fallback via clients
 let meds = [];
 let takenToday = {};
 
-// Tenta obter dados atuais do app
 const clientsList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
 for (const client of clientsList) {
 try {
@@ -109,29 +111,24 @@ const agora = new Date();
 const hojeStr = agora.toLocaleDateString('pt-BR');
 const agoraMinutes = agora.getHours() * 60 + agora.getMinutes();
 
-// Verifica cada medicamento
 for (const med of meds) {
 const times = med.times || [];
 for (const horario of times) {
 const key = `${med.id}_${horario}`;
 
-// Já tomado hoje?
 if (takenToday[key]) continue;
 
 const [h, m] = horario.split(':').map(Number);
 const tMinutes = h * 60 + m;
 
-// Horário já passou e ainda não foi marcado?
 if (tMinutes <= agoraMinutes && tMinutes + 5 >= agoraMinutes) {
-// Dispara notificação
 await mostrarNotificacao(med.name, med.dose, horario);
 
-// Marca como notificado para evitar spam
 const notifiedKey = `notified_${key}_${hojeStr}`;
 const cache = await caches.open('notifications-cache');
 const alreadyNotified = await cache.match(notifiedKey);
 if (!alreadyNotified) {
-await cache.put(notifiedKey, new Response('true'));
+ await cache.put(notifiedKey, new Response('true'));
 }
 }
 }
@@ -140,12 +137,11 @@ await cache.put(notifiedKey, new Response('true'));
 
 async function agendarTodosAlarmes() {
 if (!('alarms' in self)) {
-console.log('⏰ Alarm API não suportada, usando fallback de sincronização');
-// Agenda sync periódica como fallback
+console.log('⏰ Alarm API não suportada');
 if ('periodicSync' in self.registration) {
 try {
 await self.registration.periodicSync.register('medication-periodic', {
-minInterval: 15 * 60 * 1000 // 15 minutos
+ minInterval: 15 * 60 * 1000
 });
 console.log('✅ Sincronização periódica registrada');
 } catch (e) {
@@ -155,7 +151,6 @@ console.log('Periodic sync não disponível');
 return;
 }
 
-// Obtém medicamentos
 let meds = [];
 const clientsList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
 for (const client of clientsList) {
@@ -173,24 +168,19 @@ break;
 } catch (err) {}
 }
 
-// Cancela alarmes antigos
 const existingAlarms = await self.alarms.getAll();
 for (const alarm of existingAlarms) {
 await self.alarms.clear(alarm.name);
 }
 
 const agora = new Date();
-const hojeMeiaNoite = new Date(agora);
-hojeMeiaNoite.setHours(0, 0, 0, 0);
 
-// Agenda cada horário
 for (const med of meds) {
 for (const horario of med.times || []) {
 const [h, m] = horario.split(':').map(Number);
 const alarmTime = new Date();
 alarmTime.setHours(h, m, 0, 0);
 
-// Se o horário já passou hoje, agenda para amanhã
 if (alarmTime <= agora) {
 alarmTime.setDate(alarmTime.getDate() + 1);
 }
@@ -200,7 +190,7 @@ const alarmName = `${med.id}_${horario}`;
 
 await self.alarms.create(alarmName, {
 when: Date.now() + delay,
-periodInMinutes: 1440 // repete a cada 24h
+periodInMinutes: 1440
 });
 
 console.log(`⏰ Alarme agendado: ${med.name} às ${horario}`);
@@ -211,7 +201,6 @@ console.log('✅ Todos os alarmes foram agendados!');
 }
 
 async function mostrarNotificacao(nome, dose, horario) {
-// Verifica se já foi notificado neste minuto
 const agora = new Date();
 const minuteKey = `${nome}_${horario}_${agora.toISOString().slice(0, 16)}`;
 const cache = await caches.open('notifications-cache');
@@ -220,18 +209,15 @@ const jaNotificado = await cache.match(minuteKey);
 if (!jaNotificado && self.registration.showNotification) {
 await self.registration.showNotification('💊 Hora do remédio!', {
 body: `${nome} — ${dose} às ${horario}`,
-icon: '/icon-192.png',
-badge: '/icon-192.png',
+icon: './icons/icon-192.png',
+badge: './icons/icon-192.png',
 vibrate: [200, 100, 200],
 requireInteraction: true,
 tag: minuteKey,
 data: { nome, dose, horario }
 });
 
-// Marca como notificado
 await cache.put(minuteKey, new Response('true'));
-
-// Remove cache após 2 minutos
 setTimeout(() => cache.delete(minuteKey), 120000);
 }
 }
