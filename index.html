@@ -130,7 +130,7 @@
 <div class="confirm-overlay" id="confirmOverlay"><div class="confirm-box"><div class="confirm-title">Remover remédio?</div><div class="confirm-btns"><button class="confirm-no" onclick="closeConfirm()">Cancelar</button><button class="confirm-yes" id="confirmYesBtn">Remover</button></div></div></div>
 
 <script>
-// ==================== CONFIGURAÇÕES PUSH ====================
+// ==================== CONFIGURAÇÕES ====================
 const VAPID_PUBLIC_KEY = 'BO5DP1GQXi-qWd2E_rxNjEcqm00zVnZTY7x_m0435XEPuORtnAee5QzdfJwQJOI1Alk6I4rKFh_CMHCh2qUgU7o';
 
 let subscription = null;
@@ -144,6 +144,7 @@ function load() {
   try { takenToday = JSON.parse(localStorage.getItem('dosecerta_taken')) || {}; } catch(e) { takenToday = {}; }
   cleanTakenToday();
 }
+
 function save() {
   localStorage.setItem('dosecerta_meds', JSON.stringify(meds));
   localStorage.setItem('dosecerta_hist', JSON.stringify(history.slice(0, 500)));
@@ -153,8 +154,6 @@ function save() {
 function cleanTakenToday() {
   const today = new Date().toLocaleDateString('pt-BR');
   if (takenToday._date !== today) { takenToday = { _date: today }; save(); }
-  
-  // Limpa histórico com mais de 30 dias
   limparHistoricoAntigo();
 }
 
@@ -162,7 +161,6 @@ function limparHistoricoAntigo() {
   const trintaDiasAtras = new Date();
   trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 7);
   const dataLimite = trintaDiasAtras.toISOString().slice(0, 10);
-  
   const histAntigo = history.filter(h => h.dataReferencia < dataLimite);
   if (histAntigo.length > 0) {
     history = history.filter(h => h.dataReferencia >= dataLimite);
@@ -170,12 +168,11 @@ function limparHistoricoAntigo() {
   }
 }
  
-function todayStr() { return new Date().toLocaleDateString('pt-BR'); }
 function nowHHMM() { return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function esc(s) { return String(s).replace(/[&<>]/g, function(m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]; }); }
 
-// ==================== PUSH NOTIFICATIONS ====================
+// ==================== SERVICE WORKER ====================
 async function registrarServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('./sw.js');
@@ -197,13 +194,11 @@ async function solicitarPermissaoPush() {
     return;
   }
   
-  // Pede permissão
   const result = await Notification.requestPermission();
   if (result === 'granted') {
     await inscreverPush();
     document.getElementById('btnNotif').classList.add('granted');
     document.getElementById('notifBanner').classList.add('hidden');
-    // Teste
     registrarNotificacaoTeste();
   }
 }
@@ -220,59 +215,8 @@ async function inscreverPush() {
       applicationServerKey: VAPID_PUBLIC_KEY
     });
     subscription = sub;
-    console.log('Push inscrito:', sub);
-    // Salva a inscrição no servidor (opcional, pra enviar push externo)
     localStorage.setItem('push_sub', JSON.stringify(sub));
   } catch(e) { console.error('Erro push:', e); }
-}
-
-// Função para agendar notificações (usando setTimeout)
-let timersAtivos = {};
-
-// Função para agendar notificações que funcionam com app fechado
-function agendarNotificacoes() {
-  if (Notification.permission !== 'granted') return;
-  
-  const agora = new Date();
-  
-  meds.forEach(med => {
-    (med.times || []).forEach(horario => {
-      const key = `${med.id}_${horario}`;
-      if (takenToday[key]) return;
-      
-      const [h, m] = horario.split(':').map(Number);
-      const horarioDate = new Date();
-      horarioDate.setHours(h, m, 0, 0);
-      
-      if (horarioDate <= agora) return;
-      
-      // Calcula delay em milissegundos
-      const delay = horarioDate.getTime() - agora.getTime();
-      
-      // Agenda usando setTimeout (funciona com app aberto)
-      const timerId = setTimeout(() => {
-        // Notificação local via Service Worker
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'SHOW_NOTIFICATION',
-            title: '💊 Hora do remédio!',
-            body: `${med.name} — ${med.dose} às ${horario}`
-          });
-        } else {
-          // Fallback
-          new Notification('💊 Hora do remédio!', {
-            body: `${med.name} — ${med.dose} às ${horario}`,
-            icon: './icon-192.png'
-          });
-        }
-        
-        // Marca que já notificou para não repetir
-        localStorage.setItem(`notified_${key}`, 'true');
-      }, delay);
-      
-      timersAtivos[key] = timerId;
-    });
-  });
 }
 
 async function registrarNotificacaoTeste() {
@@ -293,13 +237,6 @@ function showTab(tab) {
 }
 
 // ==================== RENDER ====================
-function getCardStatus(med) {
-  const times = med.times || [];
-  if (!times.length) return Object.keys(takenToday).some(k => k.startsWith(`${med.id}_geral`)) ? 'ok' : 'none';
-  if (times.every(t => takenToday[`${med.id}_${t}`])) return 'ok';
-  return 'none';
-}
-
 function renderMeds() {
   const list = document.getElementById('medList');
   if (!meds.length) {
@@ -336,14 +273,12 @@ function marcarTomado(id) {
   let horarioMarcado = null;
   
   if (times.length === 0) {
-    // Sem horário fixo
     const chave = `${id}_geral_${agora}`;
     if (!takenToday[chave]) {
       takenToday[chave] = new Date().toISOString();
       horarioMarcado = "agora";
     }
   } else {
-    // Marca o próximo horário ou o que mais se aproxima
     const agoraMinutes = parseInt(agora.split(':')[0]) * 60 + parseInt(agora.split(':')[1]);
     let proximo = null;
     let menorDiferenca = Infinity;
@@ -363,10 +298,8 @@ function marcarTomado(id) {
       takenToday[`${id}_${proximo}`] = new Date().toISOString();
       horarioMarcado = proximo;
     } else if (times.length > 0 && !times.some(t => !takenToday[`${id}_${t}`])) {
-      // Já todos tomados, não faz nada
       return;
     } else {
-      // Marca o mais próximo mesmo que já tenha passado
       for (const t of times) {
         if (!takenToday[`${id}_${t}`]) {
           takenToday[`${id}_${t}`] = new Date().toISOString();
@@ -380,48 +313,24 @@ function marcarTomado(id) {
   if (horarioMarcado) {
     const hoje = new Date().toLocaleDateString('pt-BR');
     const hojeISO = new Date().toISOString().slice(0, 10);
-    
-    // Procura se já existe um histórico para este remédio HOJE
-    const indiceExistente = history.findIndex(h => 
-      h.medId === id && 
-      h.dataReferencia === hojeISO
-    );
+    const indiceExistente = history.findIndex(h => h.medId === id && h.dataReferencia === hojeISO);
     
     if (indiceExistente !== -1) {
-      // Já tem registro hoje → adiciona o novo horário à lista
       const entry = history[indiceExistente];
       const horariosRegistrados = entry.horarios || [];
-      
-      // Evita duplicar o mesmo horário
       if (!horariosRegistrados.includes(horarioMarcado)) {
         horariosRegistrados.push(horarioMarcado);
         horariosRegistrados.sort();
       }
-      
-      // Atualiza a entrada
-      history[indiceExistente] = {
-        ...entry,
-        horarios: horariosRegistrados,
-        ultimoHorario: horarioMarcado,
-        updatedAt: new Date().toISOString()
-      };
+      history[indiceExistente] = { ...entry, horarios: horariosRegistrados, ultimoHorario: horarioMarcado, updatedAt: new Date().toISOString() };
     } else {
-      // Primeira vez do dia → cria nova entrada
-      history.unshift({
-        medId: id,
-        medName: med.name,
-        dose: med.dose,
-        horarios: [horarioMarcado],
-        dataReferencia: hojeISO,
-        dataLegivel: hoje,
-        takenAt: new Date().toISOString()
-      });
+      history.unshift({ medId: id, medName: med.name, dose: med.dose, horarios: [horarioMarcado], dataReferencia: hojeISO, dataLegivel: hoje, takenAt: new Date().toISOString() });
     }
     
     save();
     renderAll();
-    if (currentTab === 'history') renderHistory(); // Atualiza histórico em tempo real
-    agendarNotificacoes();
+    if (currentTab === 'history') renderHistory();
+    enviarMedsParaServiceWorker();
   }
 }
 
@@ -432,12 +341,11 @@ function deleteMed(id) {
   const btn = document.getElementById('confirmYesBtn');
   btn.onclick = () => {
     meds = meds.filter(m => m.id !== id);
-    // Remove também do histórico
     history = history.filter(h => h.medId !== id);
     save();
     renderAll();
     closeConfirm();
-    agendarNotificacoes();
+    enviarMedsParaServiceWorker();
   };
   document.getElementById('confirmOverlay').classList.add('open');
 }
@@ -446,10 +354,7 @@ function closeConfirm() { document.getElementById('confirmOverlay').classList.re
 
 function renderHistory() {
   const list = document.getElementById('histList');
-  
-  const btnLimpar = history.length > 0 
-    ? `<div style="text-align:right; margin-bottom:12px;"><button class="btn-edit" onclick="limparHistoricoCompleto()" style="background:rgba(224,85,85,0.2); color:var(--danger);">🗑️ Limpar todo histórico</button></div>`
-    : '';
+  const btnLimpar = history.length > 0 ? `<div style="text-align:right; margin-bottom:12px;"><button class="btn-edit" onclick="limparHistoricoCompleto()" style="background:rgba(224,85,85,0.2); color:var(--danger);">🗑️ Limpar todo histórico</button></div>` : '';
   
   if (!history.length) {
     list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>Histórico vazio</h3><p>Aqui aparecerá o registro de remédios tomados.</p></div>';
@@ -458,26 +363,13 @@ function renderHistory() {
   
   list.innerHTML = btnLimpar + history.slice(0, 100).map(h => {
     const horariosStr = h.horarios ? h.horarios.join(', ') : h.ultimoHorario || h.time || '';
-    const dosePlural = h.horarios && h.horarios.length > 1 ? 
-      h.dose.replace(/1 comprimido/, `${h.horarios.length} comprimidos`).replace(/1 cápsula/, `${h.horarios.length} cápsulas`) : 
-      h.dose;
-    
-    return `
-      <div class="hist-item">
-        <div class="hist-dot"></div>
-        <div class="hist-info">
-          <div class="hist-name">${esc(h.medName)}</div>
-          <div class="hist-detail">${esc(dosePlural)} · ${horariosStr}</div>
-        </div>
-        <div class="hist-time">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div>
-      </div>
-    `;
+    const dosePlural = h.horarios && h.horarios.length > 1 ? h.dose.replace(/1 comprimido/, `${h.horarios.length} comprimidos`).replace(/1 cápsula/, `${h.horarios.length} cápsulas`) : h.dose;
+    return `<div class="hist-item"><div class="hist-dot"></div><div class="hist-info"><div class="hist-name">${esc(h.medName)}</div><div class="hist-detail">${esc(dosePlural)} · ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div></div>`;
   }).join('');
 }
 
-// Função para limpar histórico inteiro manualmente
 function limparHistoricoCompleto() {
-  if (confirm("Tem certeza que deseja limpar TODO o histórico? Esta ação não pode ser desfeita.")) {
+  if (confirm("Tem certeza que deseja limpar TODO o histórico?")) {
     history = [];
     save();
     renderHistory();
@@ -592,27 +484,95 @@ function saveMed() {
   save();
   closeModal();
   renderAll();
-  agendarNotificacoes(); // Reagenda com novos horários
+  enviarMedsParaServiceWorker();
 }
+
+// ==================== COMUNICAÇÃO COM SERVICE WORKER ====================
+async function enviarMedsParaServiceWorker() {
+  if (!navigator.serviceWorker?.controller) return;
+  
+  const dados = {
+    meds: meds.map(({ id, name, dose, times }) => ({ id, name, dose, times })),
+    takenToday: takenToday
+  };
+  
+  navigator.serviceWorker.controller.postMessage({
+    type: 'UPDATE_MEDS_DATA',
+    data: dados
+  });
+  
+  navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_ALARMS' });
+}
+
+// Sobrescrever função save para enviar ao SW
+const originalSave = save;
+save = function() {
+  originalSave();
+  enviarMedsParaServiceWorker();
+};
+
+// Listener para responder ao SW
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.addEventListener('message', async e => {
+    if (e.data?.type === 'GET_MEDS_DATA') {
+      if (e.ports && e.ports[0]) {
+        e.ports[0].postMessage({
+          meds: meds.map(({ id, name, dose, times }) => ({ id, name, dose, times })),
+          takenToday: takenToday
+        });
+      }
+    }
+  });
+}
+
+// Verificação ao reabrir o app
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && navigator.serviceWorker?.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'CHECK_MEDS' });
+  }
+});
 
 // ==================== INIT ====================
 (async function init() {
   load();
   await registrarServiceWorker();
+  
+  if (navigator.serviceWorker) {
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      window.location.reload();
+      return;
+    }
+  }
+  
   renderAll();
   updateClock();
   setInterval(updateClock, 10000);
-  agendarNotificacoes(); // Agenda todas as notificações
   
-  // Verifica permissão
+  if (navigator.serviceWorker?.controller) {
+    enviarMedsParaServiceWorker();
+    navigator.serviceWorker.controller.postMessage({ type: 'CHECK_MEDS' });
+  }
+  
+  setInterval(() => {
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'CHECK_MEDS' });
+    }
+  }, 15 * 60 * 1000);
+  
   if (Notification.permission === 'granted') {
-    await inscreverPush();
     document.getElementById('btnNotif').classList.add('granted');
   }
 })();
 
-// Fim do script - falta o modal HTML
-// Vou adicionar o modal no final do body via JS para garantir
+// Função agendarNotificacoes agora delega ao SW
+function agendarNotificacoes() {
+  if (navigator.serviceWorker?.controller) {
+    enviarMedsParaServiceWorker();
+  }
+}
+
+// Adicionar modal HTML dinamicamente
 setTimeout(() => {
   if (!document.getElementById('modalOverlay')) {
     const modalHTML = `
@@ -631,91 +591,6 @@ setTimeout(() => {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
   }
 }, 0);
-
-// ==================== COMUNICAÇÃO COM SERVICE WORKER ====================
-
-async function enviarMedsParaServiceWorker() {
-  if (!navigator.serviceWorker?.controller) return;
-  
-  // Envia dados atualizados sempre que mudar
-  const dados = {
-    meds: meds.map(({ id, name, dose, times }) => ({ id, name, dose, times })),
-    takenToday: takenToday
-  };
-  
-  navigator.serviceWorker.controller.postMessage({
-    type: 'UPDATE_MEDS_DATA',
-    data: dados
-  });
-  
-  // Também solicita reagendamento dos alarmes
-  navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_ALARMS' });
-}
-
-// Sobrescrever funções de save para enviar ao SW
-const originalSave = save;
-save = function() {
-  originalSave();
-  enviarMedsParaServiceWorker();
-};
-
-// Adicionar listener para responder ao SW quando ele pedir dados
-if (navigator.serviceWorker) {
-  navigator.serviceWorker.addEventListener('message', async e => {
-    if (e.data?.type === 'GET_MEDS_DATA') {
-      if (e.ports && e.ports[0]) {
-        e.ports[0].postMessage({
-          meds: meds.map(({ id, name, dose, times }) => ({ id, name, dose, times })),
-          takenToday: takenToday
-        });
-      }
-    }
-  });
-}
-
-// Forçar verificação ao reabrir o app
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && navigator.serviceWorker?.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: 'CHECK_MEDS' });
-  }
-});
-
-// ==================== INIT SIMPLIFICADO ====================
-(async function init() {
-  load();
-  await registrarServiceWorker();
-  renderAll();
-  updateClock();
-  setInterval(updateClock, 10000);
-  
-  // Agendar via SW imediatamente
-  if (navigator.serviceWorker?.controller) {
-    enviarMedsParaServiceWorker();
-    navigator.serviceWorker.controller.postMessage({ type: 'CHECK_MEDS' });
-  }
-  
-  // Verificação periódica a cada 15 minutos (fallback)
-  setInterval(() => {
-    if (navigator.serviceWorker?.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'CHECK_MEDS' });
-    }
-  }, 15 * 60 * 1000);
-  
-  // Permissão de notificação
-  if (Notification.permission === 'granted') {
-    document.getElementById('btnNotif').classList.add('granted');
-    await solicitarPermissaoPush(); // apenas para manter compatibilidade
-  }
-})();
-
-// Substituir função agendarNotificacoes para não usar mais setTimeout
-agendarNotificacoes = function() {
-  // Agora delegamos ao Service Worker
-  if (navigator.serviceWorker?.controller) {
-    enviarMedsParaServiceWorker();
-  }
-};
- 
 </script>
 </body>
 </html>
