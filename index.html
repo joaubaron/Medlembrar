@@ -316,14 +316,14 @@ function marcarTomado(id) {
   
   const agora = nowHHMM();
   const times = med.times || [];
-  let marcado = false;
+  let horarioMarcado = null;
   
   if (times.length === 0) {
     // Sem horário fixo
     const chave = `${id}_geral_${agora}`;
     if (!takenToday[chave]) {
       takenToday[chave] = new Date().toISOString();
-      marcado = true;
+      horarioMarcado = "agora";
     }
   } else {
     // Marca o próximo horário ou o que mais se aproxima
@@ -344,26 +344,67 @@ function marcarTomado(id) {
     
     if (proximo) {
       takenToday[`${id}_${proximo}`] = new Date().toISOString();
-      marcado = true;
+      horarioMarcado = proximo;
     } else if (times.length > 0 && !times.some(t => !takenToday[`${id}_${t}`])) {
       // Já todos tomados, não faz nada
+      return;
     } else {
       // Marca o mais próximo mesmo que já tenha passado
       for (const t of times) {
         if (!takenToday[`${id}_${t}`]) {
           takenToday[`${id}_${t}`] = new Date().toISOString();
-          marcado = true;
+          horarioMarcado = t;
           break;
         }
       }
     }
   }
   
-  if (marcado) {
-    history.unshift({ medId: id, medName: med.name, dose: med.dose, time: agora, takenAt: new Date().toISOString() });
+  if (horarioMarcado) {
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    const hojeISO = new Date().toISOString().slice(0, 10);
+    
+    // Procura se já existe um histórico para este remédio HOJE
+    const indiceExistente = history.findIndex(h => 
+      h.medId === id && 
+      h.dataReferencia === hojeISO
+    );
+    
+    if (indiceExistente !== -1) {
+      // Já tem registro hoje → adiciona o novo horário à lista
+      const entry = history[indiceExistente];
+      const horariosRegistrados = entry.horarios || [];
+      
+      // Evita duplicar o mesmo horário
+      if (!horariosRegistrados.includes(horarioMarcado)) {
+        horariosRegistrados.push(horarioMarcado);
+        horariosRegistrados.sort();
+      }
+      
+      // Atualiza a entrada
+      history[indiceExistente] = {
+        ...entry,
+        horarios: horariosRegistrados,
+        ultimoHorario: horarioMarcado,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      // Primeira vez do dia → cria nova entrada
+      history.unshift({
+        medId: id,
+        medName: med.name,
+        dose: med.dose,
+        horarios: [horarioMarcado],
+        dataReferencia: hojeISO,
+        dataLegivel: hoje,
+        takenAt: new Date().toISOString()
+      });
+    }
+    
     save();
     renderAll();
-    agendarNotificacoes(); // Reagenda após marcar
+    if (currentTab === 'history') renderHistory(); // Atualiza histórico em tempo real
+    agendarNotificacoes();
   }
 }
 
@@ -389,16 +430,25 @@ function renderHistory() {
     list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>Histórico vazio</h3><p>Aqui aparecerá o registro de remédios tomados.</p></div>';
     return;
   }
-  list.innerHTML = history.slice(0, 100).map(h => `
-    <div class="hist-item">
-      <div class="hist-dot"></div>
-      <div class="hist-info">
-        <div class="hist-name">${esc(h.medName)}</div>
-        <div class="hist-detail">${esc(h.dose)} · ${h.time}</div>
+  
+  list.innerHTML = history.slice(0, 100).map(h => {
+    // Formata os horários (ex: "08:00, 11:30")
+    const horariosStr = h.horarios ? h.horarios.join(', ') : h.ultimoHorario || h.time || '';
+    const dosePlural = h.horarios && h.horarios.length > 1 ? 
+      h.dose.replace(/1 comprimido/, `${h.horarios.length} comprimidos`).replace(/1 cápsula/, `${h.horarios.length} cápsulas`) : 
+      h.dose;
+    
+    return `
+      <div class="hist-item">
+        <div class="hist-dot"></div>
+        <div class="hist-info">
+          <div class="hist-name">${esc(h.medName)}</div>
+          <div class="hist-detail">${esc(dosePlural)} · ${horariosStr}</div>
+        </div>
+        <div class="hist-time">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div>
       </div>
-      <div class="hist-time">${new Date(h.takenAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function updateNextBanner() {
