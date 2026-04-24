@@ -702,6 +702,49 @@ function tick(){
 }
 function renderAll(){renderMeds();updateNextBanner();updateNotifBtn();if(currentTab==='history')renderHistory();}
 
+// Adicione no final do seu script, antes de fechar a tag </script>
+
+// Função que envia lembrete pelo WhatsApp (abre o app)
+function enviarWhatsApp(medName, dose, horario) {
+    const numero = "5547991581967";
+  
+    const mensagem = `💊 *HORA DO REMÉDIO* 💊\n\n${medName} - ${dose}\nHorário: ${horario}\n\n✅ Não esqueca de tomar!`;
+  
+    const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+  
+    // Tenta abrir o WhatsApp
+    window.open(url, '_blank');
+}
+
+// Modifique a função agendarLocais() para também enviar WhatsApp
+const agendarLocaisOriginal = agendarLocais;
+agendarLocais = function() {
+    // Chama a função original do OneSignal
+    if(typeof agendarLocaisOriginal === 'function') agendarLocaisOriginal();
+  
+    // Adiciona envio por WhatsApp
+    if(Notification.permission !== 'granted') return;
+  
+    const now = new Date();
+    meds.forEach(med => {
+        (med.times || []).forEach(t => {
+            const [th, tm] = t.split(':').map(Number);
+            const target = new Date();
+            target.setHours(th, tm, 0, 0);
+            const diffMin = (now - target) / 60000;
+        
+            // Se está no horário (entre 1 minuto antes e 5 minutos depois)
+            if(diffMin >= -1 && diffMin <= 5) {
+                const jaEnviado = localStorage.getItem(`whats_${med.id}_${t}_${todayStr()}`);
+                if(!jaEnviado && !takenToday[`${med.id}_${t}`]) {
+                    enviarWhatsApp(med.name, med.dose, t);
+                    localStorage.setItem(`whats_${med.id}_${t}_${todayStr()}`, '1');
+                }
+            }
+        });
+    });
+};
+              
 // ── INIT ─────────────────────────────────────────────────────────
 load();
 renderAll();
