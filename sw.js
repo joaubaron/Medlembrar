@@ -1,4 +1,4 @@
-const CACHE_VERSION = '24.04.2026-1121';
+const CACHE_VERSION = '24.04.2026-1129';
 const CACHE_NAME = `medlembrar-${CACHE_VERSION}`;
 const ASSETS = ['./index.html', './manifest.json'];
 
