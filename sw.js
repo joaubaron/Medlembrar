@@ -1,4 +1,4 @@
-const CACHE_VERSION = '24.04.2026-1336';
+const CACHE_VERSION = '24.04.2026-1337';
 const CACHE_NAME = `dosecerta-${CACHE_VERSION}`;
 const ASSETS = [
 './index.html',
