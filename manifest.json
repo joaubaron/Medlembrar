@@ -1,16 +1,26 @@
 {
-"name": "DoseCerta",
-"short_name": "DoseCerta",
-"description": "Controle de remédios com alertas mesmo com app fechado",
-"start_url": ".",
-"scope": ".",
-"display": "standalone",
-"orientation": "portrait",
-"background_color": "#f2fafc",
-"theme_color": "#f2fafc",
-"lang": "pt-BR",
-"icons": [
-{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-{ "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-]
+  "name": "DoseCerta",
+  "short_name": "DoseCerta",
+  "description": "Controle de remédios com alertas mesmo com app fechado",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2fafc",
+  "theme_color": "#f2fafc",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
