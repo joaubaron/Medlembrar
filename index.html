@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="f2fafc">
+<meta name="theme-color" content="#0f2744">
 <meta name="description" content="Controle de remédios com alertas diários">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="DoseCerta">
+<meta name="apple-mobile-web-app-title" content="MedLembrar">
 <link rel="manifest" href="./manifest.json">
-<title>DoseCerta</title>
+<title>MedLembrar</title>
 
 <!-- OneSignal -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -162,7 +162,7 @@
           <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14h-2v-4H6v-2h4V7h2v4h4v2h-4v4z"/></svg>
         </div>
         <div class="logo-text">
-          <h1>DoseCerta</h1>
+          <h1>MedLembrar</h1>
           <p id="clockDisplay">--:--</p>
         </div>
       </div>
@@ -281,8 +281,14 @@ if('serviceWorker' in navigator){
 
 // ── ONESIGNAL ───────────────────────────────────────────────────
 function ativarNotif(){
-  if(window.OneSignal){
+  // Tenta OneSignal primeiro, senão usa API nativa
+  if(window.OneSignal && window.OneSignal.Slidedown){
     window.OneSignal.Slidedown.promptPush();
+  } else if('Notification' in window){
+    Notification.requestPermission().then(p=>{
+      updateNotifBtn();
+      if(p==='granted') renderAll();
+    });
   }
 }
 
@@ -352,7 +358,11 @@ function getTimeStatus(t){
 }
 function getCardStatus(med){
   const times=med.times||[];
-  if(!times.length)return'none';
+  // Sem horários: verifica se foi marcado hoje de forma geral
+  if(!times.length){
+    const tomadoHoje=Object.keys(takenToday).some(k=>k.startsWith(`${med.id}_geral`));
+    return tomadoHoje?'ok':'none';
+  }
   if(times.every(t=>takenToday[`${med.id}_${t}`]))return'ok';
   if(times.some(t=>!takenToday[`${med.id}_${t}`]&&t<nowHHMM()))return'late';
   if(times.some(t=>!takenToday[`${med.id}_${t}`]&&getTimeStatus(t)==='warn'))return'warn';
@@ -369,7 +379,10 @@ function renderMeds(){
   updateNotifBtn();
   list.innerHTML=meds.map(med=>{
     const status=getCardStatus(med);
-    const allTaken=(med.times||[]).length>0&&(med.times||[]).every(t=>takenToday[`${med.id}_${t}`]);
+    const semHorario=!(med.times||[]).length;
+    const allTaken=semHorario
+      ? Object.keys(takenToday).some(k=>k.startsWith(`${med.id}_geral`))
+      : (med.times||[]).length>0&&(med.times||[]).every(t=>takenToday[`${med.id}_${t}`]);
     const timesHtml=(med.times||[]).map(t=>{
       const tk=takenToday[`${med.id}_${t}`];
       return`<div class="time-chip${tk?' taken':''}"><span class="chip-dot ${tk?'ok':getTimeStatus(t)}"></span>${t}</div>`;
@@ -394,9 +407,12 @@ function renderMeds(){
 
 function markNext(id){
   const med=meds.find(m=>m.id===id); if(!med)return;
-  const next=(med.times||[]).find(t=>!takenToday[`${id}_${t}`]); if(!next)return;
-  takenToday[`${id}_${next}`]=new Date().toISOString();
-  history.unshift({medId:id,medName:med.name,dose:med.dose,time:next,takenAt:new Date().toISOString()});
+  // Com horários: marca o próximo pendente
+  // Sem horários: marca uma dose geral com o horário atual
+  const next=(med.times||[]).find(t=>!takenToday[`${id}_${t}`]);
+  const chave=next||`geral_${nowHHMM()}`;
+  takenToday[`${id}_${chave}`]=new Date().toISOString();
+  history.unshift({medId:id,medName:med.name,dose:med.dose,time:next||nowHHMM(),takenAt:new Date().toISOString()});
   if(history.length>500)history=history.slice(0,500);
   save(); renderAll();
 }
@@ -490,6 +506,9 @@ function saveMed(){
   const dose=document.getElementById('fDose').value.trim();
   if(!name){document.getElementById('fName').focus();return;}
   if(!dose){document.getElementById('fDose').focus();return;}
+  // Auto-adiciona horário que estiver no campo e ainda não foi adicionado
+  const vTime=document.getElementById('fTime').value;
+  if(vTime && !tempTimes.includes(vTime)){tempTimes.push(vTime);tempTimes.sort();}
   const med={
     id:editingId||uid(), name, dose,
     freq:document.getElementById('fFreq').value,
@@ -523,6 +542,46 @@ setInterval(tick,60000);
 if(Notification.permission==='default'&&meds.length>0){
   document.getElementById('notifBanner').classList.remove('hidden');
 }
+<script>
+
+// ====================== PULL-TO-REFRESH (sem scroll normal) ======================
+let pullStartY = 0;
+let isPulling = false;
+
+document.addEventListener('touchstart', (e) => {
+    // Só ativa o pull se estiver no TOPO da página
+    if (document.querySelector('.container').scrollTop === 0) {
+        pullStartY = e.touches[0].clientY;
+        isPulling = true;
+    }
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (isPulling && document.querySelector('.container').scrollTop === 0) {
+        const currentY = e.touches[0].clientY;
+        const pullDistance = currentY - pullStartY;
+        
+        // Se puxou para baixo (pullDistance > 0), NÃO deixa a tela rolar
+        if (pullDistance > 0) {
+            e.preventDefault();
+        }
+    }
+});
+
+document.addEventListener('touchend', (e) => {
+    if (isPulling && document.querySelector('.container').scrollTop === 0) {
+        const pullEndY = e.changedTouches[0].clientY;
+        const pullDistance = pullEndY - pullStartY;
+        
+        if (pullDistance > 80) {
+            window.location.reload(true);
+        }
+    }
+    isPulling = false;
+    pullStartY = 0;
+});
+</script>
+
 </script>
 </body>
 </html>
