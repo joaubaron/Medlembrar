@@ -621,23 +621,72 @@ function addTime(){
   renderTimeTags();
 }
 function removeTime(i){tempTimes.splice(i,1);renderTimeTags();}
+
+// Substitua a função saveMed() existente por esta:
 function saveMed(){
-  const name=document.getElementById('fName').value.trim();
-  const dose=document.getElementById('fDose').value.trim();
-  if(!name){document.getElementById('fName').focus();return;}
-  if(!dose){document.getElementById('fDose').focus();return;}
-  // Auto-adiciona horário que estiver no campo e ainda não foi adicionado
-  const vTime=document.getElementById('fTime').value;
-  if(vTime && !tempTimes.includes(vTime)){tempTimes.push(vTime);tempTimes.sort();}
-  const med={
-    id:editingId||uid(), name, dose,
-    freq:document.getElementById('fFreq').value,
-    times:[...tempTimes],
-    notes:document.getElementById('fNotes').value.trim(),
-    createdAt:editingId?(meds.find(m=>m.id===editingId)||{}).createdAt||new Date().toISOString():new Date().toISOString()
+  const name = document.getElementById('fName').value.trim();
+  const dose = document.getElementById('fDose').value.trim();
+  
+  if(!name){ document.getElementById('fName').focus(); return; }
+  if(!dose){ document.getElementById('fDose').focus(); return; }
+  
+  // Adiciona horário pendente se houver
+  const vTime = document.getElementById('fTime').value;
+  if(vTime && !tempTimes.includes(vTime)){
+    tempTimes.push(vTime);
+    tempTimes.sort();
+  }
+  
+  // VALIDAÇÃO: impede criar remédio sem horário
+  if(tempTimes.length === 0){
+    alert("Adicione pelo menos um horário antes de salvar.");
+    return;
+  }
+  
+  // VERIFICA DUPLICATA: se já existe remédio com mesmo nome e mesmo horário
+  if(!editingId){
+    const duplicado = meds.some(med => 
+      med.name.toLowerCase() === name.toLowerCase() &&
+      med.dose.toLowerCase() === dose.toLowerCase() &&
+      JSON.stringify(med.times.sort()) === JSON.stringify(tempTimes.sort())
+    );
+    if(duplicado){
+      alert(`"${name}" com estes horários já está cadastrado. Edite o existente para adicionar mais horários.`);
+      return;
+    }
+    
+    // SUGESTÃO: se encontrar mesmo nome com horários diferentes, pergunta se quer mesclar
+    const mesmoNome = meds.filter(med => med.name.toLowerCase() === name.toLowerCase());
+    if(mesmoNome.length > 0){
+      const todosHorarios = [...new Set([...mesmoNome.flatMap(m => m.times || []), ...tempTimes])].sort();
+      if(confirm(`"${name}" já existe com horários: ${mesmoNome[0].times?.join(', ') || 'nenhum'}\n\nDeseja mesclar todos os horários em um único remédio?\n\nNovos horários: ${tempTimes.join(', ')}`)){
+        // Remove os duplicados e mescla
+        meds = meds.filter(m => m.name.toLowerCase() !== name.toLowerCase());
+        tempTimes = todosHorarios;
+      }
+    }
+  }
+  
+  const med = {
+    id: editingId || uid(),
+    name: name,
+    dose: dose,
+    freq: document.getElementById('fFreq').value,
+    times: [...tempTimes],
+    notes: document.getElementById('fNotes').value.trim(),
+    createdAt: editingId ? (meds.find(m=>m.id===editingId)||{}).createdAt || new Date().toISOString() : new Date().toISOString()
   };
-  meds=editingId?meds.map(m=>m.id===editingId?med:m):[...meds,med];
-  save(); closeModal(); renderAll();
+  
+  if(editingId){
+    meds = meds.map(m => m.id === editingId ? med : m);
+  } else {
+    // Remove qualquer outro remédio com mesmo nome (já tratado acima)
+    meds = [...meds, med];
+  }
+  
+  save();
+  closeModal();
+  renderAll();
 }
 
 // ── CLOCK + TICK ─────────────────────────────────────────────────
