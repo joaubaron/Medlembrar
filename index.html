@@ -27,7 +27,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .clock-display{font-size:14px;color:var(--accent);letter-spacing:0.5px;font-weight:600;margin-top:2px;margin-left:16px}
 .btn-notif{background:var(--surface);border:none;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .btn-notif svg{width:20px;height:20px;fill:var(--text2)}
-.btn-backup{background:var(--surface);border:none;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px}
 .btn-notif.granted svg{fill:var(--accent)}
 .next-banner{margin:0 20px 16px;background:linear-gradient(135deg,var(--accent2),var(--accent));border-radius:var(--radius);padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
 .next-banner.hidden{display:none}
@@ -120,8 +119,6 @@ input:focus,select:focus{border-color:var(--accent)}
         <div class="logo-text"><h1>Dose Certa</h1></div>
         <div class="clock-display" id="clockDisplay">--:--</div>
       </div>
-      <button class="btn-backup" onclick="exportarBackup()" title="Exportar backup">⬇️</button>
-      <button class="btn-backup" onclick="document.getElementById('importFile').click()" title="Importar backup">⬆️</button>
       <button class="btn-notif" id="btnNotif" onclick="solicitarPermissaoPush()">
         <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5S10.5 3.17 10.5 4v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
       </button>
@@ -150,7 +147,6 @@ input:focus,select:focus{border-color:var(--accent)}
   </div>
 
   <button class="fab" onclick="openModal()">➕ Adicionar</button>
-  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarBackup(event)">
 </div>
 
 <!-- Modal: Adicionar/Editar -->
@@ -317,10 +313,10 @@ function renderMeds() {
   list.innerHTML = meds.map(med => {
     const allTaken = (med.times || []).length > 0 && (med.times || []).every(t => takenToday[`${med.id}_${t}`]);
     const timesHtml = (med.times || []).map(t => `<div class="time-chip${takenToday[`${med.id}_${t}`] ? ' taken' : ''}"><span class="chip-dot ok"></span>${t}</div>`).join('');
+    const notesHtml = med.notes ? `<span style="font-size:13px;color:var(--text2);margin-left:8px;align-self:center">${esc(med.notes)}</span>` : '';
     return `<div class="med-card">
 <div class="card-top"><div class="card-name">${esc(med.name)}</div><div class="card-dose">${esc(med.dose)}</div></div>
-${med.notes ? `<div style="font-size:13px;color:var(--text2);margin-top:6px">${esc(med.notes)}</div>` : ''}
-${timesHtml ? `<div class="card-times">${timesHtml}</div>` : '<div style="font-size:12px;color:var(--text3);margin-top:8px">Sem horários definidos</div>'}
+${timesHtml ? `<div class="card-times" style="align-items:center">${timesHtml}${notesHtml}</div>` : `<div style="font-size:12px;color:var(--text3);margin-top:8px">Sem horários definidos${med.notes ? ' · ' + esc(med.notes) : ''}</div>`}
 <div class="card-actions">
 <button class="btn-taken" onclick="marcarTomado('${med.id}')" ${allTaken ? 'disabled' : ''}>${allTaken ? '✓ Tudo tomado' : '✓ Marcar tomado'}</button>
 <button class="btn-edit" onclick="openModal('${med.id}')">Editar</button>
@@ -541,10 +537,7 @@ document.addEventListener('visibilitychange', () => {
   await registrarServiceWorker();
   if (navigator.serviceWorker) {
     await navigator.serviceWorker.ready;
-    if (!navigator.serviceWorker.controller) {
-      const reloaded = sessionStorage.getItem('sw_reloaded');
-      if (!reloaded) { sessionStorage.setItem('sw_reloaded', '1'); setTimeout(() => window.location.reload(), 300); return; }
-    }
+    if (!navigator.serviceWorker.controller) { setTimeout(() => window.location.reload(), 300); return; }
   }
   renderAll();
   if (navigator.serviceWorker?.controller) {
@@ -556,65 +549,6 @@ document.addEventListener('visibilitychange', () => {
   }, 15 * 60 * 1000);
   if (Notification.permission === 'granted') document.getElementById('btnNotif')?.classList.add('granted');
 })();
-
-function exportarBackup() {
-  const agora = new Date();
-  const pad = n => String(n).padStart(2,"0");
-  const nome = "dosecerta" +
-    pad(agora.getDate()) + pad(agora.getMonth()+1) + String(agora.getFullYear()).slice(2) +
-    pad(agora.getHours()) + pad(agora.getMinutes());
-  const dados = { meds, history, takenToday, exportadoEm: agora.toISOString() };
-  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = nome + ".json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function importarBackup(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const dados = JSON.parse(e.target.result);
-      if (!dados.meds || !Array.isArray(dados.meds)) {
-        abrirModalInfo("Arquivo inválido", "Este arquivo não é um backup válido do Dose Certa.");
-        return;
-      }
-      const medsNovos = dados.meds.filter(m => !meds.find(ex => ex.id === m.id));
-      meds = [...meds.filter(m => !dados.meds.find(n => n.id === m.id)), ...dados.meds];
-      if (dados.history) {
-        const histNovos = dados.history.filter(h => !history.find(ex => ex.medId === h.medId && ex.dataReferencia === h.dataReferencia));
-        history = [...histNovos, ...history];
-      }
-      save(); renderAll();
-      abrirModalInfo("✅ Backup importado", medsNovos.length + " remédio(s) restaurado(s) com sucesso.");
-    } catch(err) {
-      abrirModalInfo("❌ Erro ao importar", "Não foi possível ler o arquivo. Verifique se é um backup válido.");
-    }
-    event.target.value = "";
-  };
-  reader.readAsText(file);
-}
-
-function abrirModalInfo(titulo, corpo) {
-  document.getElementById("infoModalTitulo").textContent = titulo;
-  document.getElementById("infoModalCorpo").textContent = corpo;
-  document.getElementById("infoSimples").classList.add("open");
-}
 </script>
-
-<!-- Modal: Info simples (importar/exportar) -->
-<div class="confirm-overlay" id="infoSimples">
-  <div class="confirm-box">
-    <div class="confirm-title" id="infoModalTitulo"></div>
-    <div style="font-size:14px;color:var(--text2);margin-top:8px" id="infoModalCorpo"></div>
-    <div class="confirm-btns" style="margin-top:20px">
-      <button class="btn-save" onclick="document.getElementById('infoSimples').classList.remove('open')">OK</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
