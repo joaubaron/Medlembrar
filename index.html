@@ -151,6 +151,44 @@
   .notif-req.hidden{display:none}
   .notif-req svg{width:20px;height:20px;fill:var(--warn);flex-shrink:0}
   .notif-req p{font-size:13px;color:var(--warn);line-height:1.4}
+
+  /* CONFIRM MODAL */
+  .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    opacity:0;pointer-events:none;transition:opacity 0.2s}
+  .confirm-overlay.open{opacity:1;pointer-events:all}
+  .confirm-box{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;
+    transform:scale(0.9);transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1);text-align:center}
+  .confirm-overlay.open .confirm-box{transform:scale(1)}
+  .confirm-icon{font-size:44px;margin-bottom:12px}
+  .confirm-title{font-size:18px;font-weight:700;margin-bottom:8px}
+  .confirm-desc{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:24px}
+  .confirm-btns{display:flex;gap:10px}
+  .confirm-btns button{flex:1;border:none;border-radius:var(--pill);padding:14px;font-size:15px;font-weight:600;cursor:pointer}
+  .confirm-no{background:var(--surface2);color:var(--text2)}
+  .confirm-yes{background:var(--danger);color:white}
+
+  /* NOTIF MODAL */
+  .notif-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;
+    display:flex;align-items:flex-end;padding:0;
+    opacity:0;pointer-events:none;transition:opacity 0.2s}
+  .notif-modal-overlay.open{opacity:1;pointer-events:all}
+  .notif-modal-box{background:var(--surface);border-radius:24px 24px 0 0;padding:28px 24px calc(28px + env(safe-area-inset-bottom));width:100%;
+    transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);text-align:center}
+  .notif-modal-overlay.open .notif-modal-box{transform:translateY(0)}
+  .notif-modal-icon{font-size:52px;margin-bottom:14px}
+  .notif-modal-title{font-size:20px;font-weight:700;margin-bottom:10px}
+  .notif-modal-desc{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:8px}
+  .notif-modal-warning{font-size:12px;color:var(--text3);margin-bottom:24px;line-height:1.5}
+  .notif-modal-btns{display:flex;flex-direction:column;gap:10px}
+  .btn-allow{background:var(--accent);color:white;border:none;border-radius:var(--pill);padding:16px;font-size:16px;font-weight:700;cursor:pointer}
+  .btn-later{background:var(--surface2);color:var(--text2);border:none;border-radius:var(--pill);padding:14px;font-size:15px;cursor:pointer}
+
+  /* NOTIF BLOQUEADA */
+  .notif-blocked{background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.3);
+    border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;
+    color:var(--danger);line-height:1.5;display:none}
+  .notif-blocked.visible{display:block}
 </style>
 </head>
 <body>
@@ -201,6 +239,33 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
     Adicionar
   </button>
+</div>
+
+<!-- MODAL CONFIRMAR REMOÇÃO -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">Remover remédio?</div>
+    <div class="confirm-desc" id="confirmDesc">Esta ação não pode ser desfeita.</div>
+    <div class="confirm-btns">
+      <button class="confirm-no" onclick="closeConfirm()">Cancelar</button>
+      <button class="confirm-yes" id="confirmYesBtn">Remover</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTIFICAÇÕES -->
+<div class="notif-modal-overlay" id="notifModalOverlay">
+  <div class="notif-modal-box">
+    <div class="notif-modal-icon">🔔</div>
+    <div class="notif-modal-title">Ativar alertas de horário</div>
+    <div class="notif-modal-desc">Para receber lembretes quando estiver na hora de tomar seus remédios, precisamos da sua permissão.</div>
+    <div class="notif-modal-warning" id="notifModalWarning">Os alertas aparecem mesmo com a tela bloqueada.</div>
+    <div class="notif-modal-btns">
+      <button class="btn-allow" id="btnAllow" onclick="confirmarNotif()">Permitir alertas</button>
+      <button class="btn-later" onclick="closeNotifModal()">Agora não</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -281,14 +346,58 @@ if('serviceWorker' in navigator){
 
 // ── ONESIGNAL ───────────────────────────────────────────────────
 function ativarNotif(){
-  // Tenta OneSignal primeiro, senão usa API nativa
+  const perm=Notification.permission;
+  if(perm==='granted'){
+    // Já concedido: mostra feedback rápido
+    document.getElementById('btnNotif').classList.add('granted');
+    return;
+  }
+  if(perm==='denied'){
+    // Bloqueado: instrui o usuário a desbloquear manualmente
+    openNotifModal(true);
+    return;
+  }
+  // 'default': abre nosso modal explicativo primeiro
+  openNotifModal(false);
+}
+
+function openNotifModal(bloqueado){
+  const warn=document.getElementById('notifModalWarning');
+  const btn=document.getElementById('btnAllow');
+  if(bloqueado){
+    warn.textContent='⚠️ Alertas estão bloqueados. Vá em Configurações do browser > Notificações e permita este site.';
+    btn.textContent='Entendi';
+    btn.onclick=closeNotifModal;
+  }else{
+    warn.textContent='Os alertas aparecem mesmo com a tela bloqueada.';
+    btn.textContent='Permitir alertas';
+    btn.onclick=confirmarNotif;
+  }
+  document.getElementById('notifModalOverlay').classList.add('open');
+}
+
+function closeNotifModal(){document.getElementById('notifModalOverlay').classList.remove('open');}
+document.getElementById('notifModalOverlay').addEventListener('click',function(e){if(e.target===this)closeNotifModal();});
+
+async function confirmarNotif(){
+  closeNotifModal();
+  // Tenta OneSignal, senão API nativa
   if(window.OneSignal && window.OneSignal.Slidedown){
-    window.OneSignal.Slidedown.promptPush();
-  } else if('Notification' in window){
-    Notification.requestPermission().then(p=>{
+    try{ await window.OneSignal.Slidedown.promptPush(); }catch(err){}
+  }
+  // Sempre também pede pela API nativa (funciona sem OneSignal)
+  if(Notification.permission!=='granted'){
+    const p=await Notification.requestPermission();
+    if(p==='granted'){
       updateNotifBtn();
-      if(p==='granted') renderAll();
-    });
+      // Dispara notificação de teste
+      new Notification('✅ Alertas ativados!',{body:'Você receberá lembretes nos horários cadastrados.',icon:'./icon-192.png'});
+    }else{
+      // Bloqueou na segunda tentativa
+      setTimeout(()=>openNotifModal(true),300);
+    }
+  }else{
+    updateNotifBtn();
   }
 }
 
@@ -318,13 +427,19 @@ function agendarNotificacoesHoje(){
 // Fallback: notificação local via Notification API (quando app está aberto)
 const notificados=new Set();
 function agendarLocais(){
-  const now=nowHHMM();
+  if(Notification.permission!=='granted') return;
+  const now=new Date();
+  const hhmm=nowHHMM();
   meds.forEach(med=>{
     (med.times||[]).forEach(t=>{
       const key=`${med.id}_${t}_${todayStr()}`;
-      if(t===now && !takenToday[`${med.id}_${t}`] && !notificados.has(key)){
-        notificados.add(key);
-        if(Notification.permission==='granted'){
+      // Dispara se estiver no intervalo de ±2 minutos do horário programado
+      if(!takenToday[`${med.id}_${t}`] && !notificados.has(key)){
+        const[th,tm]=t.split(':').map(Number);
+        const target=new Date(); target.setHours(th,tm,0,0);
+        const diffMin=(now-target)/60000;
+        if(diffMin>=-0.5 && diffMin<2){ // janela: de 30s antes até 2min depois
+          notificados.add(key);
           new Notification('💊 Hora do remédio!',{
             body:`${med.name} — ${med.dose}`,
             tag:key,
@@ -418,9 +533,14 @@ function markNext(id){
 }
 
 function deleteMed(id){
-  if(!confirm('Remover este remédio?'))return;
-  meds=meds.filter(m=>m.id!==id); save(); renderAll();
+  const med=meds.find(m=>m.id===id); if(!med)return;
+  document.getElementById('confirmDesc').textContent=`Remover "${med.name}"? Esta ação não pode ser desfeita.`;
+  const btn=document.getElementById('confirmYesBtn');
+  btn.onclick=()=>{meds=meds.filter(m=>m.id!==id);save();renderAll();closeConfirm();};
+  document.getElementById('confirmOverlay').classList.add('open');
 }
+function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('open');}
+document.getElementById('confirmOverlay').addEventListener('click',function(e){if(e.target===this)closeConfirm();});
 
 // ── RENDER HISTORY ───────────────────────────────────────────────
 function renderHistory(){
@@ -538,7 +658,7 @@ load();
 renderAll();
 updateClock();
 setInterval(updateClock,10000);
-setInterval(tick,60000);
+setInterval(tick,30000); // verifica a cada 30s para não perder a janela de alertas
 if(Notification.permission==='default'&&meds.length>0){
   document.getElementById('notifBanner').classList.remove('hidden');
 }
