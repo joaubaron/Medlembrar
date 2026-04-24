@@ -6,8 +6,8 @@
   "scope": "/Medlembrar/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f2744",
-  "theme_color": "#0f2744",
+  "background_color": "f2fafc",
+  "theme_color": "f2fafc",
   "lang": "pt-BR",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
