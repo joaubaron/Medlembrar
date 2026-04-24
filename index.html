@@ -234,6 +234,7 @@ function limparHistoricoAntigo() {
 function nowHHMM() { return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function esc(s) { return String(s).replace(/[&<>]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[m])); }
+function fmtHora(t) { const [h, m] = t.split(':').map(Number); return m ? `${h}h${String(m).padStart(2,'0')}m` : `${h}h`; }
 
 async function registrarServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
@@ -302,7 +303,7 @@ function renderMeds() {
   }
   list.innerHTML = meds.map(med => {
     const allTaken = (med.times || []).length > 0 && (med.times || []).every(t => takenToday[`${med.id}_${t}`]);
-    const timesHtml = (med.times || []).map(t => `<div class="time-chip${takenToday[`${med.id}_${t}`] ? ' taken' : ''}"><span class="chip-dot ok"></span>${t}</div>`).join('');
+    const timesHtml = (med.times || []).map(t => `<div class="time-chip${takenToday[`${med.id}_${t}`] ? ' taken' : ''}"><span class="chip-dot ok"></span>${fmtHora(t)}</div>`).join('');
     const notesHtml = med.notes ? `<span style="font-size:13px;color:var(--text2);margin-left:8px;align-self:center">${esc(med.notes)}</span>` : '';
     return `<div class="med-card">
 <div class="card-top"><div class="card-name">${esc(med.name)}</div><div class="card-dose">${esc(med.dose)}</div></div>
@@ -390,7 +391,7 @@ function renderHistory() {
   }
   const btnLimpar = `<div style="text-align:right;margin-bottom:12px"><button class="btn-edit" onclick="openClearHistoryConfirm()" style="background:rgba(224,85,85,0.2);color:var(--danger)">🗑️ Limpar todo histórico</button></div>`;
   list.innerHTML = btnLimpar + history.slice(0, 100).map(h => {
-    const horariosStr = (h.horarios && h.horarios.length) ? h.horarios.join(', ') : (h.ultimoHorario || 'tomado');
+    const horariosStr = (h.horarios && h.horarios.length) ? h.horarios.map(fmtHora).join(', ') : (h.ultimoHorario ? fmtHora(h.ultimoHorario) : 'tomado');
     return `<div class="hist-item"><div class="hist-dot"></div><div class="hist-info"><div class="hist-name">${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div></div>`;
   }).join('');
 }
