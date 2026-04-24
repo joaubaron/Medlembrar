@@ -212,43 +212,45 @@ async function inscreverPush() {
 // Função para agendar notificações (usando setTimeout)
 let timersAtivos = {};
 
+// Função para agendar notificações que funcionam com app fechado
 function agendarNotificacoes() {
-  // Cancela timers antigos
-  Object.values(timersAtivos).forEach(t => clearTimeout(t));
-  timersAtivos = {};
-  
   if (Notification.permission !== 'granted') return;
   
   const agora = new Date();
-  const hojeStr = todayStr();
   
   meds.forEach(med => {
     (med.times || []).forEach(horario => {
       const key = `${med.id}_${horario}`;
-      if (takenToday[key]) return; // Já tomou
+      if (takenToday[key]) return;
       
       const [h, m] = horario.split(':').map(Number);
       const horarioDate = new Date();
       horarioDate.setHours(h, m, 0, 0);
       
-      if (horarioDate <= agora) return; // Já passou
+      if (horarioDate <= agora) return;
       
-      const delay = horarioDate - agora;
+      // Calcula delay em milissegundos
+      const delay = horarioDate.getTime() - agora.getTime();
       
-      // Agenda notificação
-      const timerId = setTimeout(async () => {
-        // Dispara notificação via Service Worker
-        const registration = await navigator.serviceWorker.ready;
-        registration.showNotification(`💊 Hora do remédio!`, {
-          body: `${med.name} — ${med.dose} às ${horario}`,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png',
-          tag: key,
-          requireInteraction: true,
-          vibrate: [200, 100, 200],
-          data: { medId: med.id, horario: horario }
-        });
-        console.log(`Notificação enviada: ${med.name} às ${horario}`);
+      // Agenda usando setTimeout (funciona com app aberto)
+      const timerId = setTimeout(() => {
+        // Notificação local via Service Worker
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            title: '💊 Hora do remédio!',
+            body: `${med.name} — ${med.dose} às ${horario}`
+          });
+        } else {
+          // Fallback
+          new Notification('💊 Hora do remédio!', {
+            body: `${med.name} — ${med.dose} às ${horario}`,
+            icon: './icon-192.png'
+          });
+        }
+        
+        // Marca que já notificou para não repetir
+        localStorage.setItem(`notified_${key}`, 'true');
       }, delay);
       
       timersAtivos[key] = timerId;
