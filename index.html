@@ -25,8 +25,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .logo-icon{font-size:22px;line-height:1}
 .logo-text h1{font-size:20px;font-weight:700;margin:0}
 .clock-display{font-size:14px;color:var(--accent);letter-spacing:0.5px;font-weight:600;margin-top:2px;margin-left:16px}
-.btn-notif{background:var(--surface);border:none;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
-.btn-notif svg{width:20px;height:20px;fill:var(--text2)}
+.btn-notif{background:none;border:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.btn-notif svg{width:20px;height:20px;fill:white}
 .btn-notif.granted svg{fill:var(--accent)}
 .next-banner{margin:0 20px 16px;background:linear-gradient(135deg,var(--accent2),var(--accent));border-radius:var(--radius);padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
 .next-banner.hidden{display:none}
@@ -34,8 +34,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .next-name{font-size:16px;font-weight:700;color:white}
 .next-time{font-size:28px;font-weight:800;color:white}
 .tabs{display:flex;padding:0 20px;gap:8px;margin-bottom:16px;flex-shrink:0}
-.tab{flex:1;padding:10px;border:none;border-radius:var(--pill);font-size:14px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text2);transition:all 0.2s}
-.tab.active{background:var(--accent);color:white}
+.tab{flex:1;padding:10px;border:none;border-radius:var(--pill);font-size:14px;font-weight:600;cursor:pointer;background:none;color:rgba(255,255,255,0.45);transition:all 0.2s}
+.tab.active{background:none;color:white}
 .content{flex:1;overflow-y:auto;padding:0 20px;padding-bottom:100px;scrollbar-width:none}
 .content::-webkit-scrollbar{display:none}
 .med-card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px}
@@ -49,15 +49,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .chip-dot.ok{background:var(--accent)}
 .chip-dot.warn{background:var(--warn)}
 .card-actions{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)}
-.btn-taken{flex:1;background:var(--accent);color:white;border:none;border-radius:var(--pill);padding:9px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-taken{flex:1;background:none;color:white;border:none;border-radius:var(--pill);padding:9px;font-size:13px;font-weight:600;cursor:pointer}
 .btn-taken:disabled{opacity:0.5;cursor:default}
-.btn-edit{background:var(--surface2);color:var(--text2);border:none;border-radius:var(--pill);padding:9px 16px;cursor:pointer}
-.btn-del{background:rgba(224,85,85,0.15);color:var(--danger);border:none;border-radius:var(--pill);padding:9px 16px;cursor:pointer}
+.btn-edit{background:none;color:white;border:none;border-radius:var(--pill);padding:9px 16px;cursor:pointer}
+.btn-del{background:none;color:white;border:none;border-radius:var(--pill);padding:9px 16px;cursor:pointer}
 .empty{text-align:center;padding:40px 20px;color:var(--text2)}
 .notif-req{background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.3);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;cursor:pointer}
 .notif-req.hidden{display:none}
 .notif-req svg{width:20px;height:20px;fill:var(--warn);flex-shrink:0}
-.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;background:var(--accent);color:white;border:none;border-radius:var(--pill);padding:16px 24px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;background:none;color:white;border:none;border-radius:var(--pill);padding:16px 24px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;z-index:100}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.25s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--surface);border-radius:24px 24px 0 0;padding:0 0 env(safe-area-inset-bottom,20px);width:100%;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s}
@@ -74,10 +74,10 @@ input:focus,select:focus{border-color:var(--accent)}
 .time-tag button{background:none;border:none;color:var(--danger);font-size:18px;cursor:pointer;margin-left:4px}
 .time-add-row{display:flex;gap:8px}
 .time-add-row input{flex:1}
-.btn-add-time{background:var(--accent);color:white;border:none;border-radius:12px;padding:13px 18px;cursor:pointer}
+.btn-add-time{background:none;color:white;border:none;border-radius:12px;padding:13px 18px;cursor:pointer}
 .modal-actions{display:flex;gap:10px;padding:20px}
-.btn-save{flex:1;background:var(--accent);color:white;border:none;border-radius:var(--pill);padding:16px;font-size:16px;font-weight:700;cursor:pointer}
-.btn-cancel{background:var(--surface2);color:var(--text2);border:none;border-radius:var(--pill);padding:16px 20px;cursor:pointer}
+.btn-save{flex:1;background:none;color:white;border:none;border-radius:var(--pill);padding:16px;font-size:16px;font-weight:700;cursor:pointer}
+.btn-cancel{background:none;color:white;border:none;border-radius:var(--pill);padding:16px 20px;cursor:pointer}
 .hist-item{background:var(--surface);border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
 .hist-dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
 .hist-info{flex:1}
@@ -91,9 +91,9 @@ input:focus,select:focus{border-color:var(--accent)}
 .confirm-overlay.open .confirm-box{transform:scale(1) translateY(0)}
 .confirm-title{font-size:18px;font-weight:700;margin-bottom:8px}
 .confirm-btns{display:flex;gap:10px;margin-top:24px}
-.confirm-btns button{flex:1;border:none;border-radius:var(--pill);padding:14px;font-weight:600;cursor:pointer}
-.confirm-no{background:var(--surface2);color:var(--text2)}
-.confirm-yes{background:var(--danger);color:white}
+.confirm-btns button{flex:1;border:none;background:none;border-radius:var(--pill);padding:14px;font-weight:600;cursor:pointer;color:white}
+.confirm-no{background:none;color:white}
+.confirm-yes{background:none;color:white}
 /* Modal notificações bloqueadas */
 .info-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:400;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;padding:24px}
 .info-overlay.open{opacity:1;pointer-events:all}
@@ -106,7 +106,7 @@ input:focus,select:focus{border-color:var(--accent)}
 .info-steps li{font-size:13px;color:var(--text2);line-height:1.6;list-style:none;display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
 .info-steps li:last-child{margin-bottom:0}
 .step-num{background:var(--warn);color:var(--bg);font-size:11px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
-.btn-ok{width:100%;background:var(--accent);color:white;border:none;border-radius:var(--pill);padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn-ok{width:100%;background:none;color:white;border:none;border-radius:var(--pill);padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
 .btn-ok:active{opacity:.8}
 </style>
 </head>
