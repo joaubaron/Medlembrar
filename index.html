@@ -10,210 +10,224 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#0a1628;
-  --surface:#111f38;
-  --surface2:#172844;
-  --surface3:#1e3358;
-  --accent:#00e0a0;
-  --accent2:#00b880;
-  --accent-glow:rgba(0,224,160,0.18);
-  --warn:#ffb340;
-  --warn-bg:rgba(255,179,64,0.12);
-  --danger:#ff5757;
-  --danger-bg:rgba(255,87,87,0.12);
-  --text:#e6f0ff;
-  --text2:#7a9ac0;
-  --text3:#3d5a80;
+  --bg:#09152a;
+  --surface:#13233f;
+  --surface2:#1a2f50;
+  --surface3:#213860;
+  --accent:#00e8a8;
+  --accent-dark:#009e72;
+  --accent-glow:rgba(0,232,168,0.15);
+  --warn:#ffc040;
+  --warn-bg:rgba(255,192,64,0.14);
+  --danger:#ff5252;
+  --danger-bg:rgba(255,82,82,0.14);
+  --text:#f0f6ff;
+  --text2:#a0bcd8;
+  --text3:#5c7a9a;
   --radius:18px;
   --pill:999px;
-  --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --shadow:0 4px 24px rgba(0,0,0,0.45);
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden}
 body{padding-top:0}
-#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;position:relative}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto}
 
 /* ── Header ── */
-.header{padding:env(safe-area-inset-top,14px) 20px 0;flex-shrink:0;padding-top:max(env(safe-area-inset-top),14px)}
-.header-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px}
+.header{padding:max(env(safe-area-inset-top),14px) 18px 0;flex-shrink:0}
+.header-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px}
 .logo{display:flex;align-items:center;gap:10px}
-.logo-icon{font-size:26px;line-height:1;filter:drop-shadow(0 0 8px rgba(0,224,160,0.5))}
-.logo-text h1{font-size:21px;font-weight:800;letter-spacing:-0.3px}
+.logo-icon{font-size:26px;line-height:1}
+.logo-text h1{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(--text)}
 .logo-text h1 span{color:var(--accent)}
-.clock-badge{background:var(--surface2);border:1px solid rgba(0,224,160,0.2);border-radius:var(--pill);padding:5px 12px;font-size:13px;color:var(--accent);font-weight:700;letter-spacing:0.5px;margin-left:10px}
-.header-right{display:flex;align-items:center;gap:6px}
-.btn-icon{background:var(--surface2);border:1px solid rgba(255,255,255,0.07);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text2);font-size:18px;transition:all .2s}
-.btn-icon:active{transform:scale(.92)}
-.btn-icon.granted{color:var(--accent);border-color:rgba(0,224,160,0.3);background:var(--accent-glow)}
+.clock-badge{background:var(--surface2);border:1.5px solid rgba(0,232,168,0.3);border-radius:var(--pill);padding:5px 13px;font-size:14px;color:var(--accent);font-weight:800;letter-spacing:0.5px;margin-left:10px}
+.btn-notif{background:var(--surface2);border:1.5px solid rgba(255,255,255,0.1);width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:all .2s}
+.btn-notif.granted{border-color:rgba(0,232,168,0.4);background:var(--accent-glow)}
+.btn-notif:active{transform:scale(.9)}
 
-/* ── Today progress strip ── */
-.progress-strip{padding:0 20px 14px;flex-shrink:0}
-.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px}
-.progress-label strong{color:var(--text);font-weight:700}
-.progress-bar-bg{height:5px;background:var(--surface2);border-radius:var(--pill);overflow:hidden}
-.progress-bar-fill{height:100%;background:var(--accent);border-radius:var(--pill);transition:width .6s cubic-bezier(.4,0,.2,1)}
+/* ── Progress ── */
+.progress-strip{padding:0 18px 12px;flex-shrink:0}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:600}
+.progress-label strong{color:var(--text);font-weight:800}
+.progress-bar-bg{height:6px;background:var(--surface2);border-radius:var(--pill);overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--accent);border-radius:var(--pill);transition:width .5s cubic-bezier(.4,0,.2,1)}
 
-/* ── Tabs ── */
-.tabs{display:flex;padding:0 20px;gap:0;margin-bottom:14px;flex-shrink:0;background:var(--surface);border-radius:var(--pill);margin-left:20px;margin-right:20px;padding:4px}
-.tab{flex:1;padding:9px;border:none;border-radius:var(--pill);font-size:14px;font-weight:600;cursor:pointer;background:none;color:var(--text2);transition:all 0.22s}
-.tab.active{background:var(--surface3);color:white;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
-
-/* ── Content ── */
-.content{flex:1;overflow-y:auto;padding:0 16px;padding-bottom:100px;scrollbar-width:none}
-.content::-webkit-scrollbar{display:none}
-
-/* ── Notif banner ── */
-.notif-req{background:var(--warn-bg);border:1px solid rgba(255,179,64,0.3);border-radius:14px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer;animation:slideIn .3s ease}
-.notif-req.hidden{display:none}
-.notif-req-text{font-size:13px;color:var(--warn);font-weight:600}
-
-/* ── Med cards ── */
-.med-card{background:var(--surface);border-radius:var(--radius);padding:15px 15px 10px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.05);animation:slideIn .25s ease;transition:box-shadow .2s}
-.med-card:active{box-shadow:0 0 0 2px var(--accent)}
-.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px}
-.card-name{font-size:17px;font-weight:800;letter-spacing:-0.2px}
-.card-dose-badge{background:var(--accent-glow);color:var(--accent);font-size:11px;font-weight:700;padding:4px 10px;border-radius:var(--pill);border:1px solid rgba(0,224,160,0.2)}
-.card-notes{font-size:12px;color:var(--text2);margin-top:2px;margin-bottom:6px}
-.card-times{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.time-chip{background:var(--surface2);border-radius:var(--pill);padding:5px 12px;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .2s;border:1px solid transparent}
-.time-chip.taken{opacity:0.4;text-decoration:line-through}
-.chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.chip-dot.ok{background:var(--accent)}
-.chip-dot.warn{background:var(--warn)}
-.chip-dot.late{background:var(--danger)}
-.chip-time.late{color:var(--warn)}
-
-/* Card actions */
-.card-actions{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)}
-.btn-taken{flex:1;background:var(--accent-glow);color:var(--accent);border:1px solid rgba(0,224,160,0.25);border-radius:var(--pill);padding:7px 10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
-.btn-taken:active{background:rgba(0,224,160,0.25);transform:scale(.97)}
-.btn-taken:disabled{opacity:0.35;cursor:default}
-.btn-taken.all-taken{background:none;color:var(--text3);border-color:transparent;font-weight:600}
-
-/* Undo button (inline) */
-.btn-undo{background:var(--warn-bg);color:var(--warn);border:1px solid rgba(255,179,64,0.3);border-radius:var(--pill);padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap}
-.btn-undo:active{transform:scale(.95)}
-.btn-undo.hidden{display:none}
-
-.btn-edit{background:none;color:var(--text2);border:none;border-radius:var(--pill);padding:7px 10px;cursor:pointer;font-size:13px;flex-shrink:0;transition:color .15s}
-.btn-edit:active{color:var(--text)}
-.btn-del{background:none;color:var(--text3);border:none;border-radius:var(--pill);padding:7px 10px;cursor:pointer;font-size:18px;flex-shrink:0;transition:color .15s}
-.btn-del:active{color:var(--danger)}
-
-/* all-taken card style */
-.med-card.fully-taken{border-color:rgba(0,224,160,0.15);opacity:0.7}
-
-/* ── Empty states ── */
-.empty{text-align:center;padding:50px 20px;color:var(--text2)}
-.empty-icon{font-size:48px;margin-bottom:12px;line-height:1}
-.empty h3{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
-.empty p{font-size:14px;line-height:1.6}
-
-/* ── FAB ── */
-.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;background:var(--accent);color:#0a1628;border:none;border-radius:var(--pill);padding:15px 22px;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;z-index:100;box-shadow:0 4px 20px rgba(0,224,160,0.4);transition:transform .15s,box-shadow .15s}
-.fab:active{transform:scale(.95);box-shadow:0 2px 10px rgba(0,224,160,0.3)}
-
-/* ── Export/Import row ── */
-.io-row{display:flex;gap:8px;padding:0 16px;margin-bottom:10px;flex-shrink:0}
-.btn-io{flex:1;background:var(--surface);color:var(--text2);border:1px solid rgba(255,255,255,0.06);border-radius:var(--pill);padding:8px 10px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+/* ── IO row ── */
+.io-row{display:flex;gap:8px;padding:0 18px;margin-bottom:10px;flex-shrink:0}
+.btn-io{flex:1;background:var(--surface);color:var(--text2);border:1.5px solid rgba(255,255,255,0.09);border-radius:var(--pill);padding:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
 .btn-io:active{opacity:.7}
 #importInput{display:none}
 
-/* ── History items ── */
-.hist-section-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.2px;margin:12px 0 8px;text-transform:uppercase}
-.hist-item{background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,0.05);animation:slideIn .25s ease}
-.hist-item.today-item{border-color:rgba(0,224,160,0.15)}
-.hist-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0}
-.hist-dot.missed{background:var(--danger)}
-.hist-info{flex:1;min-width:0}
-.hist-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hist-detail{font-size:12px;color:var(--text2);margin-top:2px}
-.hist-time-label{font-size:12px;color:var(--text3);flex-shrink:0}
-.hist-item.missed .hist-name{color:var(--danger)}
-.hist-item.missed .hist-detail{color:rgba(255,87,87,0.65)}
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;margin:0 18px 12px;background:var(--surface);border-radius:var(--pill);padding:4px;flex-shrink:0}
+.tab{flex:1;padding:10px;border:none;border-radius:var(--pill);font-size:14px;font-weight:700;cursor:pointer;background:none;color:var(--text3);transition:all .2s}
+.tab.active{background:var(--surface3);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,0.35)}
 
-/* Undo button in history */
-.btn-undo-hist{background:var(--warn-bg);color:var(--warn);border:1px solid rgba(255,179,64,0.3);border-radius:var(--pill);padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
-.btn-undo-hist:active{transform:scale(.94)}
+/* ── Content scroll ── */
+.content{flex:1;overflow-y:auto;padding:0 14px;padding-bottom:100px;scrollbar-width:none}
+.content::-webkit-scrollbar{display:none}
 
-/* ── Modals ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.25s}
-.modal-overlay.open{opacity:1;pointer-events:all}
-.modal{background:var(--surface);border-radius:24px 24px 0 0;padding:0 0 env(safe-area-inset-bottom,24px);width:100%;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)}
-.modal-overlay.open .modal{transform:translateY(0)}
-.modal-handle{width:36px;height:4px;background:var(--surface3);border-radius:var(--pill);margin:12px auto 18px}
-.modal-title{font-size:20px;font-weight:800;padding:0 20px;margin-bottom:18px}
-.field{padding:0 20px;margin-bottom:14px}
-label{display:block;font-size:11px;font-weight:700;color:var(--text3);margin-bottom:7px;letter-spacing:.5px;text-transform:uppercase}
-input,select{width:100%;background:var(--surface2);border:1.5px solid rgba(255,255,255,0.07);border-radius:12px;color:var(--text);font-size:16px;padding:13px 16px;outline:none;transition:border-color .2s}
-input:focus,select:focus{border-color:var(--accent)}
-select option{background:var(--surface2)}
-.times-builder{padding:0 20px;margin-bottom:14px}
-.times-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:0}
-.time-tag{background:var(--surface2);border-radius:var(--pill);padding:7px 14px;font-size:14px;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.07)}
-.time-tag button{background:none;border:none;color:var(--danger);font-size:18px;cursor:pointer;line-height:1;padding:0 2px}
-.time-add-row{display:flex;gap:8px}
-.time-add-row input{flex:1}
-.btn-add-time{background:var(--accent-glow);color:var(--accent);border:1px solid rgba(0,224,160,0.25);border-radius:12px;padding:13px 18px;cursor:pointer;font-weight:700;white-space:nowrap}
-.modal-actions{display:flex;gap:10px;padding:16px 20px}
-.btn-save{flex:1;background:var(--accent);color:#0a1628;border:none;border-radius:var(--pill);padding:16px;font-size:16px;font-weight:800;cursor:pointer;transition:opacity .15s}
-.btn-save:active{opacity:.85}
-.btn-cancel{background:var(--surface2);color:var(--text2);border:none;border-radius:var(--pill);padding:16px 20px;cursor:pointer;font-weight:600}
+/* ── Notif banner ── */
+.notif-req{background:var(--warn-bg);border:1.5px solid rgba(255,192,64,0.35);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.notif-req.hidden{display:none}
+.notif-req-text{font-size:13px;color:var(--warn);font-weight:700}
 
-/* ── Confirm overlay ── */
-.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;padding:24px}
-.confirm-overlay.open{opacity:1;pointer-events:all}
-.confirm-box{background:var(--surface);border-radius:22px;padding:28px 24px;width:100%;max-width:340px;text-align:center;transform:scale(0.9) translateY(10px);transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,0.07)}
-.confirm-overlay.open .confirm-box{transform:scale(1) translateY(0)}
-.confirm-icon{font-size:40px;margin-bottom:12px}
-.confirm-title{font-size:18px;font-weight:800;margin-bottom:6px}
-.confirm-sub{font-size:14px;color:var(--text2);line-height:1.5}
-.confirm-btns{display:flex;gap:10px;margin-top:22px}
-.confirm-no{flex:1;background:var(--surface2);color:var(--text);border:none;border-radius:var(--pill);padding:14px;font-weight:600;cursor:pointer}
-.confirm-yes{flex:1;background:var(--danger);color:white;border:none;border-radius:var(--pill);padding:14px;font-weight:700;cursor:pointer}
-.confirm-yes.accent{background:var(--accent);color:#0a1628}
+/* ── Med card ── */
+.med-card{background:var(--surface);border-radius:var(--radius);padding:14px 14px 10px;margin-bottom:10px;border:1.5px solid rgba(255,255,255,0.06);transition:border-color .2s}
+.med-card.fully-taken{border-color:rgba(0,232,168,0.18);opacity:0.72}
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.card-name{font-size:17px;font-weight:800;color:var(--text)}
+.card-dose-badge{background:var(--accent-glow);color:var(--accent);font-size:12px;font-weight:800;padding:4px 11px;border-radius:var(--pill);border:1.5px solid rgba(0,232,168,0.25)}
+.card-notes{font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500}
 
-/* ── Blocked modal ── */
-.info-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:400;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;padding:24px}
-.info-overlay.open{opacity:1;pointer-events:all}
-.info-box{background:var(--surface);border-radius:24px;padding:30px 22px 22px;width:100%;max-width:340px;text-align:center;transform:scale(0.9) translateY(10px);transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,0.07)}
-.info-overlay.open .info-box{transform:scale(1) translateY(0)}
-.info-icon{font-size:44px;margin-bottom:14px;line-height:1}
-.info-title{font-size:19px;font-weight:800;margin-bottom:8px}
-.info-body{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px}
-.info-steps{background:var(--surface2);border-radius:14px;padding:14px 16px;margin:14px 0 18px;text-align:left}
-.info-steps li{font-size:13px;color:var(--text2);line-height:1.6;list-style:none;display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
-.info-steps li:last-child{margin-bottom:0}
-.step-num{background:var(--warn);color:#0a1628;font-size:11px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
-.btn-ok{width:100%;background:var(--accent);color:#0a1628;border:none;border-radius:var(--pill);padding:14px;font-size:15px;font-weight:800;cursor:pointer}
-.btn-ok:active{opacity:.85}
+/* ── Time chips — CLICKABLE, sem bolinhas ── */
+.card-times{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.time-chip{
+  background:var(--surface2);
+  border-radius:var(--pill);
+  padding:7px 16px;
+  font-size:14px;
+  font-weight:700;
+  color:var(--text);
+  border:1.5px solid rgba(255,255,255,0.1);
+  cursor:pointer;
+  transition:all .15s;
+  display:flex;
+  align-items:center;
+  gap:0;
+  user-select:none;
+}
+.time-chip:active{transform:scale(.95)}
+.time-chip.pending-late{
+  background:rgba(255,82,82,0.12);
+  border-color:rgba(255,82,82,0.4);
+  color:#ff7070;
+}
+.time-chip.pending-ok{
+  background:var(--accent-glow);
+  border-color:rgba(0,232,168,0.35);
+  color:var(--accent);
+}
+.time-chip.taken{
+  background:rgba(255,255,255,0.04);
+  border-color:rgba(255,255,255,0.06);
+  color:var(--text3);
+  text-decoration:line-through;
+  cursor:default;
+  opacity:0.6;
+}
 
-/* ── Toast ── */
-.toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface3);color:var(--text);padding:11px 22px;border-radius:var(--pill);font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:500;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);box-shadow:var(--shadow)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ── Card actions row ── */
+.card-actions{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.btn-edit{background:none;color:var(--text2);border:none;padding:6px 10px;cursor:pointer;font-size:15px;border-radius:var(--pill);transition:color .15s}
+.btn-edit:active{color:var(--text)}
+.btn-del{background:none;color:var(--text3);border:none;padding:6px 10px;cursor:pointer;font-size:17px;border-radius:var(--pill);transition:color .15s}
+.btn-del:active{color:var(--danger)}
+.spacer{flex:1}
+
+/* ── Undo button in card ── */
+.btn-undo-card{background:var(--warn-bg);color:var(--warn);border:1.5px solid rgba(255,192,64,0.35);border-radius:var(--pill);padding:6px 13px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s}
+.btn-undo-card:active{transform:scale(.94)}
 
 /* ── Section divider ── */
-.section-divider{display:flex;align-items:center;gap:10px;margin:16px 0 10px}
-.section-divider-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
-.section-divider-line{flex:1;height:1px;background:rgba(255,255,255,0.06)}
+.section-divider{display:flex;align-items:center;gap:10px;margin:14px 0 8px}
+.sdl{flex:1;height:1px;background:rgba(255,255,255,0.07)}
+.sdlabel{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:50px 20px;color:var(--text2)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty h3{font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px}
+.empty p{font-size:14px;line-height:1.6;color:var(--text2)}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));right:18px;background:var(--accent);color:#06111f;border:none;border-radius:var(--pill);padding:15px 22px;font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;gap:8px;z-index:100;box-shadow:0 4px 22px rgba(0,232,168,0.45);letter-spacing:-0.2px}
+.fab:active{transform:scale(.95)}
+
+/* ── History ── */
+.hist-section-label{font-size:11px;font-weight:800;color:var(--text3);letter-spacing:1.2px;margin:12px 0 8px;text-transform:uppercase}
+.hist-item{background:var(--surface);border-radius:14px;padding:13px 14px;margin-bottom:8px;border:1.5px solid rgba(255,255,255,0.07)}
+.hist-item.today-item{border-color:rgba(0,232,168,0.2)}
+.hist-item.missed{border-color:rgba(255,82,82,0.18)}
+.hist-name{font-size:15px;font-weight:800;color:var(--text);margin-bottom:3px}
+.hist-detail{font-size:13px;color:var(--text2);font-weight:500}
+.hist-item.missed .hist-name{color:var(--danger)}
+.hist-item.missed .hist-detail{color:rgba(255,82,82,0.8)}
+.hist-row{display:flex;align-items:center;justify-content:space-between}
+.hist-date{font-size:12px;color:var(--text3);font-weight:600}
+
+/* Each horário line in history today */
+.hist-time-row{display:flex;align-items:center;gap:8px;margin-top:7px}
+.hist-time-chip{background:var(--surface2);border:1px solid rgba(255,255,255,0.1);border-radius:var(--pill);padding:4px 12px;font-size:13px;color:var(--text2);font-weight:700}
+.btn-undo-hist{background:var(--warn-bg);color:var(--warn);border:1.5px solid rgba(255,192,64,0.35);border-radius:var(--pill);padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.btn-undo-hist:active{transform:scale(.94)}
+.btn-clear-hist{background:var(--danger-bg);color:var(--danger);border:1.5px solid rgba(255,82,82,0.25);border-radius:var(--pill);padding:7px 15px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px}
+.btn-clear-hist:active{opacity:.75}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface3);color:var(--text);padding:11px 22px;border-radius:var(--pill);font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:500;white-space:nowrap;border:1.5px solid rgba(255,255,255,0.12);box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:24px 24px 0 0;padding:0 0 env(safe-area-inset-bottom,24px);width:100%;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--surface3);border-radius:var(--pill);margin:12px auto 18px}
+.modal-title{font-size:20px;font-weight:900;padding:0 20px;margin-bottom:18px;color:var(--text)}
+.field{padding:0 20px;margin-bottom:14px}
+label{display:block;font-size:11px;font-weight:800;color:var(--text3);margin-bottom:7px;letter-spacing:.6px;text-transform:uppercase}
+input,select{width:100%;background:var(--surface2);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;color:var(--text);font-size:16px;padding:13px 16px;outline:none;transition:border-color .2s;font-weight:600}
+input::placeholder{color:var(--text3)}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2);color:var(--text)}
+.times-builder{padding:0 20px;margin-bottom:14px}
+.times-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:0}
+.time-tag{background:var(--surface2);border-radius:var(--pill);padding:7px 14px;font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;border:1.5px solid rgba(255,255,255,0.1)}
+.time-tag button{background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;line-height:1;padding:0 2px}
+.time-add-row{display:flex;gap:8px}
+.time-add-row input{flex:1}
+.btn-add-time{background:var(--accent-glow);color:var(--accent);border:1.5px solid rgba(0,232,168,0.3);border-radius:12px;padding:13px 18px;cursor:pointer;font-weight:800;white-space:nowrap;font-size:14px}
+.modal-actions{display:flex;gap:10px;padding:16px 20px}
+.btn-save{flex:1;background:var(--accent);color:#06111f;border:none;border-radius:var(--pill);padding:16px;font-size:16px;font-weight:900;cursor:pointer}
+.btn-save:active{opacity:.85}
+.btn-cancel{background:var(--surface2);color:var(--text2);border:none;border-radius:var(--pill);padding:16px 20px;cursor:pointer;font-weight:700;font-size:14px}
+
+/* ── Confirm ── */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;padding:24px}
+.confirm-overlay.open{opacity:1;pointer-events:all}
+.confirm-box{background:var(--surface);border-radius:22px;padding:28px 22px;width:100%;max-width:340px;text-align:center;transform:scale(.9) translateY(10px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);border:1.5px solid rgba(255,255,255,0.08)}
+.confirm-overlay.open .confirm-box{transform:scale(1) translateY(0)}
+.confirm-icon{font-size:40px;margin-bottom:12px}
+.confirm-title{font-size:18px;font-weight:900;margin-bottom:6px;color:var(--text)}
+.confirm-sub{font-size:14px;color:var(--text2);line-height:1.5}
+.confirm-btns{display:flex;gap:10px;margin-top:22px}
+.confirm-no{flex:1;background:var(--surface2);color:var(--text);border:none;border-radius:var(--pill);padding:14px;font-weight:700;cursor:pointer;font-size:14px}
+.confirm-yes{flex:1;background:var(--danger);color:#fff;border:none;border-radius:var(--pill);padding:14px;font-weight:800;cursor:pointer;font-size:14px}
+
+/* ── Blocked notif modal ── */
+.info-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:400;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;padding:24px}
+.info-overlay.open{opacity:1;pointer-events:all}
+.info-box{background:var(--surface);border-radius:24px;padding:30px 22px 22px;width:100%;max-width:340px;text-align:center;transform:scale(.9) translateY(10px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);border:1.5px solid rgba(255,255,255,0.08)}
+.info-overlay.open .info-box{transform:scale(1) translateY(0)}
+.info-icon{font-size:44px;margin-bottom:14px;line-height:1}
+.info-title{font-size:19px;font-weight:900;margin-bottom:8px;color:var(--text)}
+.info-body{font-size:13px;color:var(--text2);line-height:1.6;font-weight:500}
+.info-steps{background:var(--surface2);border-radius:14px;padding:14px 16px;margin:14px 0 18px;text-align:left}
+.info-steps li{font-size:13px;color:var(--text2);line-height:1.6;list-style:none;display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-weight:500}
+.info-steps li:last-child{margin-bottom:0}
+.step-num{background:var(--warn);color:#06111f;font-size:11px;font-weight:900;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.btn-ok{width:100%;background:var(--accent);color:#06111f;border:none;border-radius:var(--pill);padding:14px;font-size:15px;font-weight:900;cursor:pointer}
+.btn-ok:active{opacity:.85}
 
 /* ── Animations ── */
 @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.late-pulse{animation:pulse 2s ease-in-out infinite}
-
-/* ── Clear history button ── */
-.btn-clear-hist{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(255,87,87,0.2);border-radius:var(--pill);padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;margin:4px 0 14px}
-.btn-clear-hist:active{opacity:.75}
-
-/* ── Undo timeout bar (visual feedback) ── */
-.undo-bar{height:3px;border-radius:var(--pill);background:var(--warn);margin-top:5px;transform-origin:left;animation:shrink var(--dur,5s) linear forwards}
-@keyframes shrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes latePulse{0%,100%{border-color:rgba(255,82,82,0.4)}50%{border-color:rgba(255,82,82,0.9)}}
+.late-anim{animation:latePulse 2s ease-in-out infinite}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Header -->
   <div class="header">
     <div class="header-top">
       <div class="logo">
@@ -221,32 +235,26 @@ select option{background:var(--surface2)}
         <div class="logo-text"><h1>Dose<span>Certa</span></h1></div>
         <div class="clock-badge" id="clockDisplay">--:--</div>
       </div>
-      <div class="header-right">
-        <button class="btn-icon" id="btnNotif" onclick="solicitarPermissaoPush()" title="Ativar alertas">🔔</button>
-      </div>
+      <button class="btn-notif" id="btnNotif" onclick="solicitarPermissaoPush()" title="Ativar alertas">🔔</button>
     </div>
   </div>
 
-  <!-- Progress strip -->
   <div class="progress-strip">
     <div class="progress-label"><span id="progressLabel">Carregando...</span><strong id="progressCount"></strong></div>
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
   </div>
 
-  <!-- Export/Import -->
   <div class="io-row">
     <button class="btn-io" onclick="exportarDados()">⬆️ Exportar</button>
     <button class="btn-io" onclick="document.getElementById('importInput').click()">⬇️ Importar</button>
     <input type="file" id="importInput" accept=".json" onchange="importarDados(event)">
   </div>
 
-  <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" id="tabMedsBtn" onclick="showTab('meds')">Meus remédios</button>
     <button class="tab" id="tabHistBtn" onclick="showTab('history')">Já tomei</button>
   </div>
 
-  <!-- Tab: Meus remédios -->
   <div class="content" id="contentMeds">
     <div class="notif-req hidden" id="notifBanner" onclick="solicitarPermissaoPush()">
       <span>🔔</span>
@@ -255,12 +263,10 @@ select option{background:var(--surface2)}
     <div id="medList"></div>
   </div>
 
-  <!-- Tab: Já tomei -->
   <div class="content" id="contentHistory" style="display:none">
     <div id="histList"></div>
   </div>
 
-  <!-- FAB -->
   <button class="fab" onclick="openModal()">＋ Adicionar</button>
   <div class="toast" id="toast"></div>
 </div>
@@ -270,16 +276,9 @@ select option{background:var(--surface2)}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="modalTitle">Novo remédio</div>
-    <div class="field">
-      <label>Nome do remédio</label>
-      <input type="text" id="fName" placeholder="Ex: Losartana, Metformina..." autocomplete="off">
-    </div>
-    <div class="field">
-      <label>Dosagem</label>
-      <input type="text" id="fDose" placeholder="Ex: 50mg, 1 comprimido" autocomplete="off">
-    </div>
-    <div class="field">
-      <label>Frequência</label>
+    <div class="field"><label>Nome do remédio</label><input type="text" id="fName" placeholder="Ex: Losartana, Metformina..." autocomplete="off"></div>
+    <div class="field"><label>Dosagem</label><input type="text" id="fDose" placeholder="Ex: 50mg, 1 comprimido" autocomplete="off"></div>
+    <div class="field"><label>Frequência</label>
       <select id="fFreq">
         <option value="daily">Diária</option>
         <option value="weekly">Semanal</option>
@@ -295,10 +294,7 @@ select option{background:var(--surface2)}
       </div>
       <small style="color:var(--text3);font-size:11px;display:block;margin-top:6px">Ex: 08:00, 14:00, 20:00</small>
     </div>
-    <div class="field">
-      <label>Observações (opcional)</label>
-      <input type="text" id="fNotes" placeholder="Ex: Tomar em jejum, com água" autocomplete="off">
-    </div>
+    <div class="field"><label>Observações (opcional)</label><input type="text" id="fNotes" placeholder="Ex: Tomar em jejum, com água" autocomplete="off"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="saveMed()">Salvar</button>
@@ -311,7 +307,7 @@ select option{background:var(--surface2)}
   <div class="confirm-box">
     <div class="confirm-icon">🗑️</div>
     <div class="confirm-title" id="confirmTitle">Remover remédio?</div>
-    <div class="confirm-sub" id="confirmSub">Esta ação não pode ser desfeita.</div>
+    <div class="confirm-sub" id="confirmSub">O remédio e seu histórico serão apagados.</div>
     <div class="confirm-btns">
       <button class="confirm-no" onclick="closeConfirm()">Cancelar</button>
       <button class="confirm-yes" id="confirmYesBtn">Remover</button>
@@ -319,12 +315,12 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- Modal: Confirmar limpar histórico -->
+<!-- Modal: Limpar histórico -->
 <div class="confirm-overlay" id="confirmClearHistoryOverlay">
   <div class="confirm-box">
     <div class="confirm-icon">⚠️</div>
     <div class="confirm-title">Limpar todo o histórico?</div>
-    <div class="confirm-sub">O histórico dos últimos 7 dias será apagado permanentemente.</div>
+    <div class="confirm-sub">Os últimos 7 dias serão apagados permanentemente.</div>
     <div class="confirm-btns">
       <button class="confirm-no" onclick="closeClearHistoryConfirm()">Cancelar</button>
       <button class="confirm-yes" onclick="confirmClearHistory()">Limpar</button>
@@ -350,192 +346,158 @@ select option{background:var(--surface2)}
 
 <script>
 const VAPID_PUBLIC_KEY = 'BO5DP1GQXi-qWd2E_rxNjEcqm00zVnZTY7x_m0435XEPuORtnAee5QzdfJwQJOI1Alk6I4rKFh_CMHCh2qUgU7o';
-const UNDO_WINDOW_MS = 6000; // 6 segundos para desfazer
-
 let meds = [], history = [], takenToday = {};
 let editingId = null, tempTimes = [], currentTab = 'meds';
 
-// ────────────────────────────────────────────────
-// STORAGE
-// ────────────────────────────────────────────────
+// ── Storage ──────────────────────────────────────
 function load() {
-  try { meds    = JSON.parse(localStorage.getItem('dosecerta_meds')) || []; } catch(e){ meds=[];    }
-  try { history = JSON.parse(localStorage.getItem('dosecerta_hist')) || []; } catch(e){ history=[]; }
-  try { takenToday = JSON.parse(localStorage.getItem('dosecerta_taken')) || {}; } catch(e){ takenToday={}; }
+  try { meds      = JSON.parse(localStorage.getItem('dosecerta_meds'))  || []; } catch(e){ meds=[];      }
+  try { history   = JSON.parse(localStorage.getItem('dosecerta_hist'))  || []; } catch(e){ history=[];   }
+  try { takenToday= JSON.parse(localStorage.getItem('dosecerta_taken')) || {}; } catch(e){ takenToday={};}
   cleanTakenToday();
 }
-
 function save() {
   localStorage.setItem('dosecerta_meds',  JSON.stringify(meds));
-  localStorage.setItem('dosecerta_hist',  JSON.stringify(history.slice(0, 500)));
+  localStorage.setItem('dosecerta_hist',  JSON.stringify(history.slice(0,500)));
   localStorage.setItem('dosecerta_taken', JSON.stringify(takenToday));
   enviarMedsParaServiceWorker();
 }
 
-// ────────────────────────────────────────────────
-// DAY ROLLOVER & CLEANUP
-// ────────────────────────────────────────────────
+// ── Day rollover ──────────────────────────────────
 function cleanTakenToday() {
   const today = new Date().toLocaleDateString('pt-BR');
   if (takenToday._date && takenToday._date !== today) {
-    const ontem = new Date();
-    ontem.setDate(ontem.getDate() - 1);
-    const ontemISO     = ontem.toISOString().slice(0, 10);
-    const ontemLegivel = ontem.toLocaleDateString('pt-BR');
+    const ontem       = new Date(); ontem.setDate(ontem.getDate()-1);
+    const ontemISO    = ontem.toISOString().slice(0,10);
+    const ontemLeg    = ontem.toLocaleDateString('pt-BR');
     for (const med of meds) {
       if (med.freq === 'asneeded') continue;
-      for (const t of (med.times || [])) {
+      for (const t of (med.times||[])) {
         if (!takenToday[`${med.id}_${t}`]) {
-          const idx = history.findIndex(h => h.medId === med.id && h.dataReferencia === ontemISO && h.missed);
-          if (idx !== -1) {
-            const horarios = history[idx].horarios || [];
-            if (!horarios.includes(t)) { horarios.push(t); horarios.sort(); }
-            history[idx] = { ...history[idx], horarios };
+          const idx = history.findIndex(h=>h.medId===med.id&&h.dataReferencia===ontemISO&&h.missed);
+          if (idx!==-1) {
+            const hs=history[idx].horarios||[];
+            if(!hs.includes(t)){hs.push(t);hs.sort();}
+            history[idx]={...history[idx],horarios:hs};
           } else {
-            history.unshift({ medId:med.id, medName:med.name, dose:med.dose, horarios:[t], dataReferencia:ontemISO, dataLegivel:ontemLegivel, takenAt:new Date().toISOString(), missed:true });
+            history.unshift({medId:med.id,medName:med.name,dose:med.dose,horarios:[t],dataReferencia:ontemISO,dataLegivel:ontemLeg,takenAt:new Date().toISOString(),missed:true});
           }
         }
       }
     }
   }
-  if (takenToday._date !== today) { takenToday = { _date: today }; save(); }
-  limparHistoricoAntigo();
+  if (takenToday._date!==today){takenToday={_date:today};save();}
+  history=history.filter(h=>{
+    const lim=new Date();lim.setDate(lim.getDate()-7);
+    return h.dataReferencia>=lim.toISOString().slice(0,10);
+  });
 }
 
-function limparHistoricoAntigo() {
-  const limite = new Date();
-  limite.setDate(limite.getDate() - 7);
-  const dataLimite = limite.toISOString().slice(0,10);
-  history = history.filter(h => h.dataReferencia >= dataLimite);
-}
+// ── Utils ─────────────────────────────────────────
+function nowHHMM()  { return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function uid()      { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s)     { return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fmtHora(t) { if(!t||t==='agora')return'avulso'; const[h,m]=t.split(':').map(Number); return m?`${h}h${String(m).padStart(2,'0')}`:`${h}h`; }
+function minsNow()  { const[h,m]=nowHHMM().split(':').map(Number); return h*60+m; }
+function updateClock(){ const e=document.getElementById('clockDisplay'); if(e)e.textContent=nowHHMM(); }
 
-// ────────────────────────────────────────────────
-// UTILS
-// ────────────────────────────────────────────────
-function nowHHMM()  { return new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }); }
-function uid()      { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-function esc(s)     { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function fmtHora(t) { if (!t || t === 'agora') return 'hora avulsa'; const [h,m] = t.split(':').map(Number); return m ? `${h}h${String(m).padStart(2,'0')}` : `${h}h`; }
-function minsNow()  { const [h,m] = nowHHMM().split(':').map(Number); return h*60+m; }
-
-function updateClock() {
-  const el = document.getElementById('clockDisplay');
-  if (el) el.textContent = nowHHMM();
-}
-
-// ────────────────────────────────────────────────
-// PROGRESS BAR
-// ────────────────────────────────────────────────
+// ── Progress bar ──────────────────────────────────
 function updateProgress() {
-  let total = 0, taken = 0;
-  for (const med of meds) {
-    if (med.freq === 'asneeded') continue;
-    const times = med.times || [];
-    total += times.length;
-    taken += times.filter(t => takenToday[`${med.id}_${t}`]).length;
+  let total=0,taken=0;
+  for(const med of meds){
+    if(med.freq==='asneeded')continue;
+    const ts=med.times||[];
+    total+=ts.length;
+    taken+=ts.filter(t=>takenToday[`${med.id}_${t}`]).length;
   }
-  const pct = total ? Math.round((taken / total) * 100) : 0;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressCount').textContent = total ? `${taken}/${total}` : '';
-  if (total === 0) {
-    document.getElementById('progressLabel').textContent = 'Sem horários definidos';
-  } else if (taken === total) {
-    document.getElementById('progressLabel').textContent = '🎉 Todos tomados hoje!';
-  } else {
-    document.getElementById('progressLabel').textContent = `Progresso de hoje`;
-  }
+  const pct=total?Math.round((taken/total)*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressCount').textContent=total?`${taken}/${total}`:'';
+  document.getElementById('progressLabel').textContent=
+    total===0?'Sem horários definidos':
+    taken===total?'🎉 Todos tomados hoje!':
+    `Progresso de hoje`;
 }
 
-// ────────────────────────────────────────────────
-// TAB SWITCHING
-// ────────────────────────────────────────────────
+// ── Tab switching ─────────────────────────────────
 function showTab(tab) {
-  currentTab = tab;
-  document.getElementById('tabMedsBtn').classList.toggle('active', tab === 'meds');
-  document.getElementById('tabHistBtn').classList.toggle('active', tab === 'history');
-  document.getElementById('contentMeds').style.display    = tab === 'meds'    ? 'block' : 'none';
-  document.getElementById('contentHistory').style.display = tab === 'history' ? 'block' : 'none';
-  if (tab === 'history') renderHistory();
+  currentTab=tab;
+  document.getElementById('tabMedsBtn').classList.toggle('active',tab==='meds');
+  document.getElementById('tabHistBtn').classList.toggle('active',tab==='history');
+  document.getElementById('contentMeds').style.display    = tab==='meds'    ?'block':'none';
+  document.getElementById('contentHistory').style.display = tab==='history' ?'block':'none';
+  if(tab==='history')renderHistory();
 }
 
-// ────────────────────────────────────────────────
-// RENDER MEDS (Aba "Meus remédios")
-// ────────────────────────────────────────────────
+// ── Render meds ───────────────────────────────────
 function renderMeds() {
   updateProgress();
-  const list = document.getElementById('medList');
-  if (!meds.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">💊</div><h3>Nenhum remédio ainda</h3><p>Toque em <strong>＋ Adicionar</strong> para cadastrar seu primeiro remédio e configurar os horários.</p></div>`;
+  const list=document.getElementById('medList');
+  if(!meds.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">💊</div><h3>Nenhum remédio ainda</h3><p>Toque em <strong>＋ Adicionar</strong> para cadastrar seu primeiro remédio e configurar os horários.</p></div>`;
     return;
   }
-
-  function sortKey(med) {
-    const pending = (med.times || []).filter(t => !takenToday[`${med.id}_${t}`]);
-    return pending.length ? pending[0] : '99:99';
+  function sortKey(med){
+    const p=(med.times||[]).filter(t=>!takenToday[`${med.id}_${t}`]);
+    return p.length?p[0]:'99:99';
   }
-
-  const sorted = [...meds].sort((a,b) => sortKey(a).localeCompare(sortKey(b)));
-  const pendingMeds = sorted.filter(med => {
-    const times = med.times || [];
-    return times.length === 0 || !times.every(t => takenToday[`${med.id}_${t}`]);
+  const sorted=[...meds].sort((a,b)=>sortKey(a).localeCompare(sortKey(b)));
+  const pendMeds=sorted.filter(med=>{
+    const ts=med.times||[];
+    return ts.length===0||!ts.every(t=>takenToday[`${med.id}_${t}`]);
   });
-  const takenMeds = sorted.filter(med => {
-    const times = med.times || [];
-    return times.length > 0 && times.every(t => takenToday[`${med.id}_${t}`]);
+  const doneMeds=sorted.filter(med=>{
+    const ts=med.times||[];
+    return ts.length>0&&ts.every(t=>takenToday[`${med.id}_${t}`]);
   });
 
-  const nowM = minsNow();
-  let html = '';
-
-  // Pending meds
-  if (pendingMeds.length === 0 && takenMeds.length > 0) {
-    html += `<div class="empty" style="padding:30px 20px"><div class="empty-icon">🎉</div><h3>Tudo em dia!</h3><p>Todos os remédios de hoje já foram tomados.</p></div>`;
+  const nowM=minsNow();
+  let html='';
+  if(pendMeds.length===0&&doneMeds.length>0){
+    html+=`<div class="empty" style="padding:30px 20px"><div class="empty-icon">🎉</div><h3>Tudo em dia!</h3><p>Todos os remédios de hoje foram tomados.</p></div>`;
   } else {
-    html += pendingMeds.map(med => renderMedCard(med, nowM, false)).join('');
+    html+=pendMeds.map(med=>renderMedCard(med,nowM,false)).join('');
   }
-
-  // Taken meds (collapsed at bottom)
-  if (takenMeds.length > 0) {
-    html += `<div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-label">✅ Já tomados hoje (${takenMeds.length})</div><div class="section-divider-line"></div></div>`;
-    html += takenMeds.map(med => renderMedCard(med, nowM, true)).join('');
+  if(doneMeds.length>0){
+    html+=`<div class="section-divider"><div class="sdl"></div><div class="sdlabel">✅ Já tomados hoje (${doneMeds.length})</div><div class="sdl"></div></div>`;
+    html+=doneMeds.map(med=>renderMedCard(med,nowM,true)).join('');
   }
-
-  list.innerHTML = html;
+  list.innerHTML=html;
 }
 
 function renderMedCard(med, nowM, fullyTaken) {
-  const times = med.times || [];
-  const notesHtml = med.notes ? `<div class="card-notes">${esc(med.notes)}</div>` : '';
+  const times=med.times||[];
+  const notesHtml=med.notes?`<div class="card-notes">${esc(med.notes)}</div>`:'';
 
-  let timesHtml = '';
-  if (times.length) {
-    timesHtml = `<div class="card-times">${times.map(t => {
-      const taken = takenToday[`${med.id}_${t}`];
-      const [h,m] = t.split(':').map(Number);
-      const late  = !taken && (h*60+m) < nowM;
-      return `<div class="time-chip${taken?' taken':''}">
-        <span class="chip-dot ${late?'late':'ok'}"></span>
-        <span class="chip-time${late?' late':''}${late&&!taken?' late-pulse':''}">${fmtHora(t)}</span>
-      </div>`;
-    }).join('')}</div>`;
+  // ── Time chips clicáveis (sem bolinhas) ──
+  let timesHtml='';
+  if(times.length){
+    // Instrução contextual
+    const pendentes=times.filter(t=>!takenToday[`${med.id}_${t}`]);
+    const instrucao=pendentes.length?`<div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">Toque no horário para marcar como tomado</div>`:'';
+    const chips=times.map(t=>{
+      const taken=takenToday[`${med.id}_${t}`];
+      const [h,m]=t.split(':').map(Number);
+      const late=!taken&&(h*60+m)<nowM;
+      let cls='time-chip';
+      let extra='';
+      if(taken){cls+=' taken';}
+      else if(late){cls+=' pending-late late-anim';}
+      else{cls+=' pending-ok';}
+      const onclick=taken?'':`onclick="marcarHorario('${med.id}','${t}')"`;
+      return `<div class="${cls}" ${onclick}>${fmtHora(t)}</div>`;
+    }).join('');
+    timesHtml=`${instrucao}<div class="card-times">${chips}</div>`;
   } else {
-    timesHtml = `<div style="font-size:12px;color:var(--text3);margin-top:6px">Sem horários fixos${med.notes?' · '+esc(med.notes):''}</div>`;
+    // sem horários fixos — botão genérico
+    timesHtml=`<div style="font-size:12px;color:var(--text3);margin:6px 0 4px">Sem horários fixos</div>`;
   }
 
-  // Action button: "Marcar tomado" or "Já tomado" with undo
-  const allTaken = times.length > 0 && times.every(t => takenToday[`${med.id}_${t}`]);
-  let actionBtn = '';
-  if (times.length === 0) {
-    // "quando necessário" style
-    actionBtn = `<button class="btn-taken" onclick="marcarTomado('${med.id}')">✓ Registrar dose</button>`;
-  } else if (allTaken) {
-    actionBtn = `<button class="btn-taken all-taken" disabled>✓ Todos tomados</button>
-                 <button class="btn-undo" onclick="desfazerUltimaDose('${med.id}')" title="Desfazer última dose">↩ Desfazer</button>`;
-  } else {
-    const pendentes = times.filter(t => !takenToday[`${med.id}_${t}`]);
-    const hasLate   = pendentes.some(t => { const [h,mm]=t.split(':').map(Number); return (h*60+mm)<nowM; });
-    actionBtn = `<button class="btn-taken${hasLate?' late-pulse':''}" onclick="marcarTomado('${med.id}')">✓ Marcar tomado</button>`;
-  }
+  // ── Action row: desfazer (se tem algum tomado) + editar + remover ──
+  const hasTaken=times.length>0&&times.some(t=>takenToday[`${med.id}_${t}`]);
+  const undoBtn=hasTaken?`<button class="btn-undo-card" onclick="desfazerUltimaDose('${med.id}')">↩ Desfazer</button>`:'';
+  // Para remédio sem horários: botão "Registrar dose" na action row
+  const avulsoBtn=times.length===0?`<button class="btn-undo-card" style="background:var(--accent-glow);color:var(--accent);border-color:rgba(0,232,168,0.3)" onclick="marcarAvulso('${med.id}')">✓ Registrar dose</button>`:'';
 
   return `<div class="med-card${fullyTaken?' fully-taken':''}">
     <div class="card-top">
@@ -545,451 +507,330 @@ function renderMedCard(med, nowM, fullyTaken) {
     ${notesHtml}
     ${timesHtml}
     <div class="card-actions">
-      ${actionBtn}
+      ${avulsoBtn}${undoBtn}
+      <div class="spacer"></div>
       <button class="btn-edit" onclick="openModal('${med.id}')">✏️</button>
       <button class="btn-del" onclick="deleteMed('${med.id}')">🗑</button>
     </div>
   </div>`;
 }
 
-// ────────────────────────────────────────────────
-// MARCAR TOMADO
-// ────────────────────────────────────────────────
-function marcarTomado(id) {
-  const med = meds.find(m => m.id === id);
-  if (!med) return;
-  const agora = nowHHMM();
-  const times = med.times || [];
-  let horarioMarcado = null;
-
-  if (times.length === 0) {
-    const chave = `${id}_geral_${agora}`;
-    if (!takenToday[chave]) { takenToday[chave] = new Date().toISOString(); horarioMarcado = 'agora'; }
-  } else {
-    const nowM     = minsNow();
-    const pendentes = times.filter(t => !takenToday[`${id}_${t}`]);
-    if (!pendentes.length) return;
-
-    const atrasados = pendentes.filter(t => { const [h,m]=t.split(':').map(Number); return (h*60+m) <= nowM; });
-    if (atrasados.length) {
-      horarioMarcado = atrasados[0];
-    } else {
-      let best = null, bestDiff = Infinity;
-      for (const t of pendentes) {
-        const [h,m] = t.split(':').map(Number);
-        const diff  = (h*60+m) - nowM;
-        if (diff < bestDiff) { bestDiff = diff; best = t; }
-      }
-      horarioMarcado = best;
-    }
-    if (horarioMarcado) takenToday[`${id}_${horarioMarcado}`] = new Date().toISOString();
-  }
-
-  if (horarioMarcado) {
-    registrarNoHistorico(id, med, horarioMarcado);
-    save();
-    renderAll();
-    showToast(`✅ ${med.name} marcado!`);
-  }
-}
-
-// ────────────────────────────────────────────────
-// DESFAZER ÚLTIMA DOSE (aba "Meus remédios")
-// ────────────────────────────────────────────────
-function desfazerUltimaDose(id) {
-  const med = meds.find(m => m.id === id);
-  if (!med) return;
-  const times = med.times || [];
-
-  // Encontra o último horário marcado hoje (o mais recente em timestamp)
-  let ultimaChave = null, ultimaData = null;
-  for (const t of times) {
-    const chave = `${id}_${t}`;
-    const ts    = takenToday[chave];
-    if (ts && (!ultimaData || ts > ultimaData)) { ultimaData = ts; ultimaChave = chave; }
-  }
-  if (!ultimaChave) return;
-
-  const horario = ultimaChave.replace(`${id}_`, '');
-  delete takenToday[ultimaChave];
-
-  // Remove do histórico
-  const hojeISO = new Date().toISOString().slice(0,10);
-  const idx = history.findIndex(h => h.medId === id && h.dataReferencia === hojeISO && !h.missed);
-  if (idx !== -1) {
-    const entry   = history[idx];
-    const horarios = (entry.horarios || []).filter(h => h !== horario);
-    if (horarios.length === 0) {
-      history.splice(idx, 1);
-    } else {
-      history[idx] = { ...entry, horarios };
-    }
-  }
-
+// ── Marcar horário específico ─────────────────────
+function marcarHorario(medId, horario) {
+  const med=meds.find(m=>m.id===medId);
+  if(!med)return;
+  if(takenToday[`${medId}_${horario}`])return; // já tomado
+  takenToday[`${medId}_${horario}`]=new Date().toISOString();
+  registrarNoHistorico(medId,med,horario);
   save();
   renderAll();
+  // Se ainda tem pendentes, permanece na aba meds; se tudo tomado, permanece também
+  showToast(`✅ ${med.name} — ${fmtHora(horario)} marcado!`);
+}
+
+// ── Registrar dose avulsa (sem horário) ──────────
+function marcarAvulso(medId) {
+  const med=meds.find(m=>m.id===medId);
+  if(!med)return;
+  const agora=nowHHMM();
+  const chave=`${medId}_geral_${agora}`;
+  takenToday[chave]=new Date().toISOString();
+  registrarNoHistorico(medId,med,'agora');
+  save(); renderAll();
+  showToast(`✅ ${med.name} registrado!`);
+}
+
+// ── Desfazer última dose ──────────────────────────
+function desfazerUltimaDose(id) {
+  const med=meds.find(m=>m.id===id);
+  if(!med)return;
+  const times=med.times||[];
+
+  // Última chave marcada hoje (maior timestamp)
+  let ultChave=null, ultTs=null;
+  for(const t of times){
+    const k=`${id}_${t}`;
+    const ts=takenToday[k];
+    if(ts&&(!ultTs||ts>ultTs)){ultTs=ts;ultChave=k;}
+  }
+  if(!ultChave)return;
+  const horario=ultChave.replace(`${id}_`,'');
+  delete takenToday[ultChave];
+
+  const hojeISO=new Date().toISOString().slice(0,10);
+  const idx=history.findIndex(h=>h.medId===id&&h.dataReferencia===hojeISO&&!h.missed);
+  if(idx!==-1){
+    const hs=(history[idx].horarios||[]).filter(h=>h!==horario);
+    if(hs.length===0)history.splice(idx,1);
+    else history[idx]={...history[idx],horarios:hs};
+  }
+  save(); renderAll();
   showToast(`↩ Dose de ${med.name} desfeita`);
 }
 
-// ────────────────────────────────────────────────
-// DESFAZER NO HISTÓRICO (aba "Já tomei")
-// ────────────────────────────────────────────────
+// ── Desfazer do histórico ─────────────────────────
 function desfazerDoseHistorico(medId, horario) {
-  const hojeISO = new Date().toISOString().slice(0,10);
-  const med = meds.find(m => m.id === medId);
-
-  // Remove de takenToday
-  const chave = `${medId}_${horario}`;
-  if (takenToday[chave]) delete takenToday[chave];
-
-  // Remove do histórico
-  const idx = history.findIndex(h => h.medId === medId && h.dataReferencia === hojeISO && !h.missed);
-  if (idx !== -1) {
-    const entry    = history[idx];
-    const horarios = (entry.horarios || []).filter(h => h !== horario);
-    if (horarios.length === 0) {
-      history.splice(idx, 1);
-    } else {
-      history[idx] = { ...entry, horarios };
-    }
+  const med=meds.find(m=>m.id===medId);
+  const k=`${medId}_${horario}`;
+  if(takenToday[k])delete takenToday[k];
+  const hojeISO=new Date().toISOString().slice(0,10);
+  const idx=history.findIndex(h=>h.medId===medId&&h.dataReferencia===hojeISO&&!h.missed);
+  if(idx!==-1){
+    const hs=(history[idx].horarios||[]).filter(h=>h!==horario);
+    if(hs.length===0)history.splice(idx,1);
+    else history[idx]={...history[idx],horarios:hs};
   }
-
-  save();
-  renderAll();
+  save(); renderAll();
   showToast(`↩ Dose desfeita${med?' — '+med.name:''}`);
 }
 
-function registrarNoHistorico(id, med, horarioMarcado) {
-  const hojeISO    = new Date().toISOString().slice(0,10);
-  const hojeLegivel = new Date().toLocaleDateString('pt-BR');
-  const idx = history.findIndex(h => h.medId === id && h.dataReferencia === hojeISO && !h.missed);
-  if (idx !== -1) {
-    const entry    = history[idx];
-    const horarios = entry.horarios || [];
-    if (!horarios.includes(horarioMarcado)) { horarios.push(horarioMarcado); horarios.sort(); }
-    history[idx] = { ...entry, horarios, ultimoHorario: horarioMarcado, updatedAt: new Date().toISOString() };
+function registrarNoHistorico(id, med, horario) {
+  const hojeISO=new Date().toISOString().slice(0,10);
+  const hojeLeg=new Date().toLocaleDateString('pt-BR');
+  const idx=history.findIndex(h=>h.medId===id&&h.dataReferencia===hojeISO&&!h.missed);
+  if(idx!==-1){
+    const hs=history[idx].horarios||[];
+    if(!hs.includes(horario)){hs.push(horario);hs.sort();}
+    history[idx]={...history[idx],horarios:hs,updatedAt:new Date().toISOString()};
   } else {
-    history.unshift({ medId:id, medName:med.name, dose:med.dose, horarios:[horarioMarcado], dataReferencia:hojeISO, dataLegivel:hojeLegivel, takenAt:new Date().toISOString() });
+    history.unshift({medId:id,medName:med.name,dose:med.dose,horarios:[horario],dataReferencia:hojeISO,dataLegivel:hojeLeg,takenAt:new Date().toISOString()});
   }
 }
 
-// ────────────────────────────────────────────────
-// RENDER HISTORY (Aba "Já tomei")
-// ────────────────────────────────────────────────
+// ── Render history ────────────────────────────────
 function renderHistory() {
-  const list    = document.getElementById('histList');
-  const hojeISO = new Date().toISOString().slice(0,10);
+  const list=document.getElementById('histList');
+  const hojeISO=new Date().toISOString().slice(0,10);
+  const hojeTomados=history.filter(h=>!h.missed&&h.dataReferencia===hojeISO);
+  const passado=history.filter(h=>h.dataReferencia!==hojeISO||h.missed);
 
-  const hojeTomados = history.filter(h => !h.missed && h.dataReferencia === hojeISO);
-  const passado     = history.filter(h => h.dataReferencia !== hojeISO || h.missed);
-
-  if (!history.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>Nenhum registro ainda</h3><p>Os remédios que você marcar como tomados aparecerão aqui.</p></div>`;
+  if(!history.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><h3>Nenhum registro ainda</h3><p>Os remédios que você marcar como tomados aparecerão aqui.</p></div>`;
     return;
   }
 
-  let html = '';
+  let html='';
 
-  // TODAY taken — with undo button per horário
-  if (hojeTomados.length) {
-    html += `<div class="hist-section-label">🗓 Hoje</div>`;
-    html += hojeTomados.map(h => {
-      const horarios = h.horarios && h.horarios.length ? h.horarios : (h.ultimoHorario ? [h.ultimoHorario] : []);
-      // Each taken horário gets its own undo button
-      const horariosHtml = horarios.map(t =>
-        `<div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-          <span style="font-size:13px;color:var(--text2)">🕐 ${fmtHora(t)}</span>
+  if(hojeTomados.length){
+    html+=`<div class="hist-section-label">🗓 Hoje</div>`;
+    html+=hojeTomados.map(h=>{
+      const horarios=h.horarios&&h.horarios.length?h.horarios:(h.ultimoHorario?[h.ultimoHorario]:[]);
+      const horariosHtml=horarios.map(t=>`
+        <div class="hist-time-row">
+          <div class="hist-time-chip">${fmtHora(t)}</div>
           <button class="btn-undo-hist" onclick="desfazerDoseHistorico('${h.medId}','${t}')">↩ Desfazer</button>
-        </div>`
-      ).join('');
-
+        </div>`).join('');
       return `<div class="hist-item today-item">
-        <div class="hist-dot"></div>
-        <div class="hist-info">
-          <div class="hist-name">✅ ${esc(h.medName)}</div>
-          <div class="hist-detail">${esc(h.dose)}</div>
-          ${horariosHtml}
-        </div>
+        <div class="hist-name">✅ ${esc(h.medName)}</div>
+        <div class="hist-detail">${esc(h.dose)}</div>
+        ${horariosHtml}
       </div>`;
     }).join('');
   }
 
-  // OLDER history
-  if (passado.length) {
-    html += `<div class="hist-section-label" style="margin-top:${hojeTomados.length?'16px':'4px'}">📅 Histórico</div>`;
-    html += `<div style="margin-bottom:10px"><button class="btn-clear-hist" onclick="openClearHistoryConfirm()">🗑️ Limpar todo histórico</button></div>`;
-    html += passado.slice(0, 100).map(h => {
-      const horariosStr = h.horarios && h.horarios.length ? h.horarios.map(fmtHora).join(', ') : (h.ultimoHorario ? fmtHora(h.ultimoHorario) : 'tomado');
-      if (h.missed) {
-        return `<div class="hist-item missed">
-          <div class="hist-dot missed"></div>
-          <div class="hist-info">
-            <div class="hist-name">⚠️ ${esc(h.medName)}</div>
-            <div class="hist-detail">${esc(h.dose)} · Não tomado: ${horariosStr}</div>
-          </div>
-          <div class="hist-time-label">${h.dataLegivel}</div>
-        </div>`;
-      }
+  if(passado.length){
+    html+=`<div class="hist-section-label" style="margin-top:${hojeTomados.length?'14px':'4px'}">📅 Histórico</div>`;
+    html+=`<button class="btn-clear-hist" onclick="openClearHistoryConfirm()">🗑️ Limpar todo histórico</button>`;
+    html+=passado.slice(0,100).map(h=>{
+      const horariosStr=h.horarios&&h.horarios.length?h.horarios.map(fmtHora).join(', '):(h.ultimoHorario?fmtHora(h.ultimoHorario):'tomado');
+      if(h.missed)return `<div class="hist-item missed">
+        <div class="hist-row"><div class="hist-name">⚠️ ${esc(h.medName)}</div><div class="hist-date">${h.dataLegivel}</div></div>
+        <div class="hist-detail">Não tomado: ${horariosStr}</div>
+      </div>`;
       return `<div class="hist-item">
-        <div class="hist-dot"></div>
-        <div class="hist-info">
-          <div class="hist-name">${esc(h.medName)}</div>
-          <div class="hist-detail">${esc(h.dose)} · ${horariosStr}</div>
-        </div>
-        <div class="hist-time-label">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div>
+        <div class="hist-row"><div class="hist-name">${esc(h.medName)}</div><div class="hist-date">${h.dataLegivel||new Date(h.takenAt).toLocaleDateString('pt-BR')}</div></div>
+        <div class="hist-detail">${esc(h.dose)} · ${horariosStr}</div>
       </div>`;
     }).join('');
-  } else if (!hojeTomados.length) {
-    html = `<div class="empty"><div class="empty-icon">📋</div><h3>Nenhum registro ainda</h3><p>Os remédios que você marcar como tomados aparecerão aqui.</p></div>`;
+  } else if(!hojeTomados.length){
+    html=`<div class="empty"><div class="empty-icon">📋</div><h3>Nenhum registro ainda</h3><p>Os remédios que você marcar como tomados aparecerão aqui.</p></div>`;
   }
 
-  list.innerHTML = html;
+  list.innerHTML=html;
 }
 
-// ────────────────────────────────────────────────
-// DELETE MED
-// ────────────────────────────────────────────────
+// ── Delete med ────────────────────────────────────
 function deleteMed(id) {
-  const med = meds.find(m => m.id === id);
-  if (!med) return;
-  document.getElementById('confirmTitle').textContent = `Remover "${med.name}"?`;
-  document.getElementById('confirmSub').textContent   = 'O remédio e todo seu histórico serão apagados.';
-  const btn    = document.getElementById('confirmYesBtn');
-  const newBtn = btn.cloneNode(true);
-  btn.parentNode.replaceChild(newBtn, btn);
-  newBtn.className = 'confirm-yes';
-  newBtn.textContent = 'Remover';
-  newBtn.onclick = () => {
-    meds    = meds.filter(m => m.id !== id);
-    history = history.filter(h => h.medId !== id);
-    // Clean takenToday
-    for (const key of Object.keys(takenToday)) {
-      if (key.startsWith(id + '_')) delete takenToday[key];
-    }
-    save(); renderAll(); closeConfirm();
+  const med=meds.find(m=>m.id===id);
+  if(!med)return;
+  document.getElementById('confirmTitle').textContent=`Remover "${med.name}"?`;
+  document.getElementById('confirmSub').textContent='O remédio e todo seu histórico serão apagados.';
+  const btn=document.getElementById('confirmYesBtn');
+  const nb=btn.cloneNode(true);
+  btn.parentNode.replaceChild(nb,btn);
+  nb.className='confirm-yes';
+  nb.textContent='Remover';
+  nb.onclick=()=>{
+    meds=meds.filter(m=>m.id!==id);
+    history=history.filter(h=>h.medId!==id);
+    for(const k of Object.keys(takenToday))if(k.startsWith(id+'_'))delete takenToday[k];
+    save();renderAll();closeConfirm();
     showToast(`🗑️ ${med.name} removido`);
   };
   document.getElementById('confirmOverlay').classList.add('open');
 }
+function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('open'); }
 
-function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); }
-
-// ────────────────────────────────────────────────
-// MODAL: CRIAR/EDITAR
-// ────────────────────────────────────────────────
-function openModal(id = null) {
-  editingId = id; tempTimes = [];
-  document.getElementById('fName').value  = '';
-  document.getElementById('fDose').value  = '';
-  document.getElementById('fNotes').value = '';
-  document.getElementById('fFreq').value  = 'daily';
-  document.getElementById('fTime').value  = '08:00';
-  document.getElementById('modalTitle').textContent = id ? '✏️ Editar remédio' : '➕ Novo remédio';
-  if (id) {
-    const med = meds.find(m => m.id === id);
-    if (med) {
-      document.getElementById('fName').value  = med.name;
-      document.getElementById('fDose').value  = med.dose;
-      document.getElementById('fNotes').value = med.notes || '';
-      document.getElementById('fFreq').value  = med.freq  || 'daily';
-      tempTimes = [...(med.times || [])];
+// ── Modal criar/editar ────────────────────────────
+function openModal(id=null){
+  editingId=id; tempTimes=[];
+  ['fName','fDose','fNotes'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('fFreq').value='daily';
+  document.getElementById('fTime').value='08:00';
+  document.getElementById('modalTitle').textContent=id?'✏️ Editar remédio':'➕ Novo remédio';
+  if(id){
+    const med=meds.find(m=>m.id===id);
+    if(med){
+      document.getElementById('fName').value=med.name;
+      document.getElementById('fDose').value=med.dose;
+      document.getElementById('fNotes').value=med.notes||'';
+      document.getElementById('fFreq').value=med.freq||'daily';
+      tempTimes=[...(med.times||[])];
     }
   }
   renderTimeTags();
   document.getElementById('modalOverlay').classList.add('open');
 }
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); editingId=null; }
+function handleOverlayClick(e){ if(e.target===document.getElementById('modalOverlay'))closeModal(); }
 
-function closeModal()              { document.getElementById('modalOverlay').classList.remove('open'); editingId = null; }
-function handleOverlayClick(e)    { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
-
-function renderTimeTags() {
-  const c = document.getElementById('timeTagsList');
-  if (!c) return;
-  if (!tempTimes.length) {
-    c.innerHTML = `<span style="font-size:13px;color:var(--text3)">Nenhum horário adicionado</span>`;
-    return;
-  }
-  c.innerHTML = tempTimes.map((t,i) => `<div class="time-tag">${fmtHora(t)} <button onclick="removeTime(${i})" aria-label="Remover horário">×</button></div>`).join('');
+function renderTimeTags(){
+  const c=document.getElementById('timeTagsList');
+  if(!c)return;
+  if(!tempTimes.length){c.innerHTML=`<span style="font-size:13px;color:var(--text3)">Nenhum horário adicionado</span>`;return;}
+  c.innerHTML=tempTimes.map((t,i)=>`<div class="time-tag">${fmtHora(t)}<button onclick="removeTime(${i})" aria-label="Remover">×</button></div>`).join('');
 }
+function addTime(){ const v=document.getElementById('fTime').value; if(!v)return; if(!tempTimes.includes(v)){tempTimes.push(v);tempTimes.sort();}renderTimeTags(); }
+function removeTime(i){ tempTimes.splice(i,1);renderTimeTags(); }
 
-function addTime() {
-  const v = document.getElementById('fTime').value;
-  if (!v) return;
-  if (!tempTimes.includes(v)) { tempTimes.push(v); tempTimes.sort(); }
-  renderTimeTags();
-}
-
-function removeTime(i) { tempTimes.splice(i,1); renderTimeTags(); }
-
-function saveMed() {
-  const name = document.getElementById('fName').value.trim();
-  const dose = document.getElementById('fDose').value.trim();
-  if (!name)  { showToast('⚠️ Informe o nome do remédio'); return; }
-  if (!dose)  { showToast('⚠️ Informe a dosagem');         return; }
-  const med = {
-    id:        editingId || uid(),
-    name, dose,
-    freq:      document.getElementById('fFreq').value,
-    times:     [...tempTimes],
-    notes:     document.getElementById('fNotes').value.trim(),
-    createdAt: editingId ? (meds.find(m => m.id === editingId) || {}).createdAt || new Date().toISOString() : new Date().toISOString()
+function saveMed(){
+  const name=document.getElementById('fName').value.trim();
+  const dose=document.getElementById('fDose').value.trim();
+  if(!name){showToast('⚠️ Informe o nome do remédio');return;}
+  if(!dose){showToast('⚠️ Informe a dosagem');return;}
+  const med={
+    id:editingId||uid(),name,dose,
+    freq:document.getElementById('fFreq').value,
+    times:[...tempTimes],
+    notes:document.getElementById('fNotes').value.trim(),
+    createdAt:editingId?(meds.find(m=>m.id===editingId)||{}).createdAt||new Date().toISOString():new Date().toISOString()
   };
-  if (editingId) { meds = meds.map(m => m.id === editingId ? med : m); }
-  else           { meds = [...meds, med]; }
-  save(); closeModal(); renderAll();
-  showToast(editingId ? '✅ Remédio atualizado' : '✅ Remédio adicionado');
+  if(editingId)meds=meds.map(m=>m.id===editingId?med:m);
+  else meds=[...meds,med];
+  save();closeModal();renderAll();
+  showToast(editingId?'✅ Remédio atualizado':'✅ Remédio adicionado');
 }
 
-// ────────────────────────────────────────────────
-// HISTORY CONTROLS
-// ────────────────────────────────────────────────
-function openClearHistoryConfirm()  { document.getElementById('confirmClearHistoryOverlay').classList.add('open'); }
-function closeClearHistoryConfirm() { document.getElementById('confirmClearHistoryOverlay').classList.remove('open'); }
-function confirmClearHistory()      { history = []; save(); renderHistory(); closeClearHistoryConfirm(); showToast('🗑️ Histórico limpo'); }
+// ── History controls ──────────────────────────────
+function openClearHistoryConfirm(){ document.getElementById('confirmClearHistoryOverlay').classList.add('open'); }
+function closeClearHistoryConfirm(){ document.getElementById('confirmClearHistoryOverlay').classList.remove('open'); }
+function confirmClearHistory(){ history=[];save();renderHistory();closeClearHistoryConfirm();showToast('🗑️ Histórico limpo'); }
 
-// ────────────────────────────────────────────────
-// RENDER ALL
-// ────────────────────────────────────────────────
-function renderAll() {
+// ── Render all ────────────────────────────────────
+function renderAll(){
   renderMeds();
-  if (currentTab === 'history') renderHistory();
-  const granted = Notification.permission === 'granted';
-  document.getElementById('btnNotif').classList.toggle('granted', granted);
-  if (granted || !meds.length) {
-    document.getElementById('notifBanner').classList.add('hidden');
-  } else {
-    document.getElementById('notifBanner').classList.remove('hidden');
-  }
+  if(currentTab==='history')renderHistory();
+  const granted=Notification.permission==='granted';
+  document.getElementById('btnNotif').classList.toggle('granted',granted);
+  if(granted||!meds.length)document.getElementById('notifBanner').classList.add('hidden');
+  else document.getElementById('notifBanner').classList.remove('hidden');
 }
 
-// ────────────────────────────────────────────────
-// TOAST
-// ────────────────────────────────────────────────
-function showToast(msg, dur = 2800) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._tid);
-  t._tid = setTimeout(() => t.classList.remove('show'), dur);
+// ── Toast ─────────────────────────────────────────
+function showToast(msg,dur=2800){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._tid);t._tid=setTimeout(()=>t.classList.remove('show'),dur);
 }
 
-// ────────────────────────────────────────────────
-// EXPORT / IMPORT
-// ────────────────────────────────────────────────
-function exportarDados() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const filename = `dosecerta${String(now.getFullYear()).slice(2)}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}.json`;
-  const blob = new Blob([JSON.stringify({ meds, history, takenToday, exportedAt: now.toISOString() }, null, 2)], { type:'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-  URL.revokeObjectURL(a.href);
-  showToast('✅ Exportado: ' + filename);
+// ── Export / Import ───────────────────────────────
+function exportarDados(){
+  const now=new Date(),pad=n=>String(n).padStart(2,'0');
+  const fn=`dosecerta${String(now.getFullYear()).slice(2)}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+  const blob=new Blob([JSON.stringify({meds,history,takenToday,exportedAt:now.toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();URL.revokeObjectURL(a.href);
+  showToast('✅ Exportado: '+fn);
+}
+function importarDados(event){
+  const file=event.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!Array.isArray(d.meds))throw 0;
+      meds=d.meds;history=Array.isArray(d.history)?d.history:[];
+      takenToday=(d.takenToday&&typeof d.takenToday==='object')?d.takenToday:{};
+      save();renderAll();showToast('✅ Dados restaurados com sucesso');
+    }catch{showToast('❌ Arquivo inválido ou corrompido');}
+    event.target.value='';
+  };r.readAsText(file);
 }
 
-function importarDados(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!Array.isArray(data.meds)) throw new Error('inválido');
-      meds      = data.meds;
-      history   = Array.isArray(data.history)   ? data.history   : [];
-      takenToday= (data.takenToday && typeof data.takenToday === 'object') ? data.takenToday : {};
-      save(); renderAll();
-      showToast('✅ Dados restaurados com sucesso');
-    } catch { showToast('❌ Arquivo inválido ou corrompido'); }
-    event.target.value = '';
-  };
-  reader.readAsText(file);
-}
+// ── Notifications ─────────────────────────────────
+function openBlockedModal(){ document.getElementById('blockedModal').classList.add('open'); }
+function closeBlockedModal(){ document.getElementById('blockedModal').classList.remove('open'); }
 
-// ────────────────────────────────────────────────
-// NOTIFICATIONS
-// ────────────────────────────────────────────────
-function openBlockedModal()  { document.getElementById('blockedModal').classList.add('open'); }
-function closeBlockedModal() { document.getElementById('blockedModal').classList.remove('open'); }
-
-async function solicitarPermissaoPush() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'denied') { openBlockedModal(); return; }
-  if (Notification.permission === 'granted') { await inscreverPush(); return; }
-  const result = await Notification.requestPermission();
-  if (result === 'granted') {
+async function solicitarPermissaoPush(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='denied'){openBlockedModal();return;}
+  if(Notification.permission==='granted'){await inscreverPush();return;}
+  const r=await Notification.requestPermission();
+  if(r==='granted'){
     await inscreverPush();
     document.getElementById('btnNotif').classList.add('granted');
     document.getElementById('notifBanner').classList.add('hidden');
-    const reg = await navigator.serviceWorker.ready;
-    reg.showNotification('✅ Alertas ativados!', { body: 'Você receberá lembretes nos horários cadastrados.', icon:'./icons/icon-192.png' });
-    showToast('🔔 Alertas ativados com sucesso!');
+    const reg=await navigator.serviceWorker.ready;
+    reg.showNotification('✅ Alertas ativados!',{body:'Você receberá lembretes nos horários cadastrados.',icon:'./icons/icon-192.png'});
+    showToast('🔔 Alertas ativados!');
   }
 }
-
-async function inscreverPush() {
-  if (!('serviceWorker' in navigator)) return;
-  const reg = await navigator.serviceWorker.ready;
-  const existing = await reg.pushManager.getSubscription();
-  if (existing) { return; }
-  try {
-    await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:VAPID_PUBLIC_KEY });
-  } catch(e) { console.error('Erro push:', e); }
+async function inscreverPush(){
+  if(!('serviceWorker' in navigator))return;
+  const reg=await navigator.serviceWorker.ready;
+  const ex=await reg.pushManager.getSubscription();
+  if(ex)return;
+  try{await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:VAPID_PUBLIC_KEY});}catch(e){console.error('Erro push:',e);}
 }
-
-async function registrarServiceWorker() {
-  if (!('serviceWorker' in navigator)) return;
+async function registrarServiceWorker(){
+  if(!('serviceWorker' in navigator))return;
   return await navigator.serviceWorker.register('./sw.js');
 }
-
-function enviarMedsParaServiceWorker() {
-  if (!navigator.serviceWorker?.controller) return;
-  try {
-    navigator.serviceWorker.controller.postMessage({ type:'UPDATE_MEDS_DATA', data:{ meds: meds.map(({id,name,dose,times})=>({id,name,dose,times})), takenToday } });
-    navigator.serviceWorker.controller.postMessage({ type:'SCHEDULE_ALARMS' });
-  } catch(e) {}
+function enviarMedsParaServiceWorker(){
+  if(!navigator.serviceWorker?.controller)return;
+  try{
+    navigator.serviceWorker.controller.postMessage({type:'UPDATE_MEDS_DATA',data:{meds:meds.map(({id,name,dose,times})=>({id,name,dose,times})),takenToday}});
+    navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_ALARMS'});
+  }catch(e){}
 }
-
-if (navigator.serviceWorker) {
-  navigator.serviceWorker.addEventListener('message', async e => {
-    if (e.data?.type === 'GET_MEDS_DATA' && e.ports?.[0]) {
-      e.ports[0].postMessage({ meds: meds.map(({id,name,dose,times})=>({id,name,dose,times})), takenToday });
-    }
+if(navigator.serviceWorker){
+  navigator.serviceWorker.addEventListener('message',async e=>{
+    if(e.data?.type==='GET_MEDS_DATA'&&e.ports?.[0])
+      e.ports[0].postMessage({meds:meds.map(({id,name,dose,times})=>({id,name,dose,times})),takenToday});
   });
 }
-
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && navigator.serviceWorker?.controller) {
-    navigator.serviceWorker.controller.postMessage({ type:'CHECK_MEDS' });
-    renderAll(); // re-render to update late statuses
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&navigator.serviceWorker?.controller){
+    navigator.serviceWorker.controller.postMessage({type:'CHECK_MEDS'});
+    renderAll();
   }
 });
 
-// ────────────────────────────────────────────────
-// INIT
-// ────────────────────────────────────────────────
-(async function init() {
-  load();
-  updateClock();
-  setInterval(updateClock, 1000);
-  // Re-render a cada 1min para atualizar chips "atrasado"
-  setInterval(() => { renderMeds(); }, 60_000);
-
+// ── Init ──────────────────────────────────────────
+(async function init(){
+  load();updateClock();setInterval(updateClock,1000);
+  setInterval(()=>renderMeds(),60000);
   await registrarServiceWorker();
-  if (navigator.serviceWorker) {
+  if(navigator.serviceWorker){
     await navigator.serviceWorker.ready;
-    if (!navigator.serviceWorker.controller) { setTimeout(() => window.location.reload(), 300); return; }
+    if(!navigator.serviceWorker.controller){setTimeout(()=>window.location.reload(),300);return;}
   }
   renderAll();
-  if (navigator.serviceWorker?.controller) {
+  if(navigator.serviceWorker?.controller){
     enviarMedsParaServiceWorker();
-    navigator.serviceWorker.controller.postMessage({ type:'CHECK_MEDS' });
+    navigator.serviceWorker.controller.postMessage({type:'CHECK_MEDS'});
   }
-  setInterval(() => {
-    if (navigator.serviceWorker?.controller) navigator.serviceWorker.controller.postMessage({ type:'CHECK_MEDS' });
-  }, 15 * 60 * 1000);
-
-  if (Notification.permission === 'granted') document.getElementById('btnNotif')?.classList.add('granted');
+  setInterval(()=>{if(navigator.serviceWorker?.controller)navigator.serviceWorker.controller.postMessage({type:'CHECK_MEDS'});},15*60*1000);
+  if(Notification.permission==='granted')document.getElementById('btnNotif')?.classList.add('granted');
 })();
 </script>
 </body>
