@@ -77,6 +77,9 @@ input:focus,select:focus{border-color:var(--accent)}
 .btn-cancel{background:none;color:white;border:none;border-radius:var(--pill);padding:16px 20px;cursor:pointer}
 .hist-item{background:var(--surface);border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
 .hist-dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.hist-dot.missed{background:var(--danger)}
+.hist-item.missed .hist-name{color:var(--danger)}
+.hist-item.missed .hist-detail{color:rgba(224,85,85,0.7)}
 .hist-info{flex:1}
 .hist-name{font-size:15px;font-weight:600}
 .hist-detail{font-size:13px;color:var(--text2)}
@@ -221,6 +224,29 @@ function save() {
 
 function cleanTakenToday() {
   const today = new Date().toLocaleDateString('pt-BR');
+  if (takenToday._date && takenToday._date !== today) {
+    // Dia virou — registrar doses esquecidas do dia anterior
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    const ontemISO = ontem.toISOString().slice(0, 10);
+    const ontemLegivel = ontem.toLocaleDateString('pt-BR');
+    for (const med of meds) {
+      if (med.freq === 'asneeded') continue; // "quando necessário" não conta
+      for (const t of (med.times || [])) {
+        if (!takenToday[`${med.id}_${t}`]) {
+          // Não foi tomado — registrar como perdido
+          const indice = history.findIndex(h => h.medId === med.id && h.dataReferencia === ontemISO && h.missed);
+          if (indice !== -1) {
+            const horariosReg = history[indice].horarios || [];
+            if (!horariosReg.includes(t)) { horariosReg.push(t); horariosReg.sort(); }
+            history[indice] = { ...history[indice], horarios: horariosReg };
+          } else {
+            history.unshift({ medId: med.id, medName: med.name, dose: med.dose, horarios: [t], dataReferencia: ontemISO, dataLegivel: ontemLegivel, takenAt: new Date().toISOString(), missed: true });
+          }
+        }
+      }
+    }
+  }
   if (takenToday._date !== today) { takenToday = { _date: today }; save(); }
   limparHistoricoAntigo();
 }
@@ -410,6 +436,9 @@ function renderHistory() {
   const btnLimpar = `<div style="text-align:right;margin-bottom:12px"><button class="btn-edit" onclick="openClearHistoryConfirm()" style="background:rgba(224,85,85,0.2);color:var(--danger)">🗑️ Limpar todo histórico</button></div>`;
   list.innerHTML = btnLimpar + history.slice(0, 100).map(h => {
     const horariosStr = (h.horarios && h.horarios.length) ? h.horarios.map(fmtHora).join(', ') : (h.ultimoHorario ? fmtHora(h.ultimoHorario) : 'tomado');
+    if (h.missed) {
+      return `<div class="hist-item missed"><div class="hist-dot missed"></div><div class="hist-info"><div class="hist-name">⚠️ ${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · Não tomado: ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel}</div></div>`;
+    }
     return `<div class="hist-item"><div class="hist-dot"></div><div class="hist-info"><div class="hist-name">${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div></div>`;
   }).join('');
 }
