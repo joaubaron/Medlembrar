@@ -108,6 +108,14 @@ input:focus,select:focus{border-color:var(--accent)}
 .step-num{background:var(--warn);color:var(--bg);font-size:11px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
 .btn-ok{width:100%;background:none;color:white;border:none;border-radius:var(--pill);padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
 .btn-ok:active{opacity:.8}
+/* Export / Import */
+.io-row{display:flex;gap:8px;padding:0 20px;margin-bottom:12px;flex-shrink:0}
+.btn-io{flex:1;background:var(--surface);color:var(--text2);border:none;border-radius:var(--pill);padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-io:active{opacity:.75}
+#importInput{display:none}
+/* Toast */
+.toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface2);color:var(--text);padding:10px 20px;border-radius:var(--pill);font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:500;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -123,6 +131,12 @@ input:focus,select:focus{border-color:var(--accent)}
         <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5S10.5 3.17 10.5 4v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
       </button>
     </div>
+  </div>
+
+  <div class="io-row">
+    <button class="btn-io" onclick="exportarDados()">⬆️ Exportar</button>
+    <button class="btn-io" onclick="document.getElementById('importInput').click()">⬇️ Importar</button>
+    <input type="file" id="importInput" accept=".json" onchange="importarDados(event)">
   </div>
 
   <div class="tabs">
@@ -142,6 +156,7 @@ input:focus,select:focus{border-color:var(--accent)}
   </div>
 
   <button class="fab" onclick="openModal()">➕ Adicionar</button>
+  <div class="toast" id="toast"></div>
 </div>
 
 <!-- Modal: Adicionar/Editar -->
@@ -542,6 +557,54 @@ document.addEventListener('visibilitychange', () => {
     navigator.serviceWorker.controller.postMessage({ type: 'CHECK_MEDS' });
   }
 });
+
+function showToast(msg, dur = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function exportarDados() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(2);
+  const mm = pad(now.getMonth() + 1);
+  const dd = pad(now.getDate());
+  const hh = pad(now.getHours());
+  const mi = pad(now.getMinutes());
+  const filename = `dosecerta${yy}${mm}${dd}${hh}${mi}.json`;
+  const payload = JSON.stringify({ meds, history, takenToday, exportedAt: now.toISOString() }, null, 2);
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Exportado: ' + filename);
+}
+
+function importarDados(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data.meds)) throw new Error('Arquivo inválido');
+      meds = data.meds;
+      history = Array.isArray(data.history) ? data.history : [];
+      takenToday = (data.takenToday && typeof data.takenToday === 'object') ? data.takenToday : {};
+      save();
+      renderAll();
+      showToast('✅ Dados restaurados com sucesso');
+    } catch(err) {
+      showToast('❌ Arquivo inválido ou corrompido');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
 
 (async function init() {
   load();
