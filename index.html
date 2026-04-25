@@ -53,7 +53,10 @@ body{padding-top:0}
 
 /* ── IO row ── */
 .io-row{display:flex;gap:8px;padding:0 18px;margin-bottom:10px;flex-shrink:0}
-.btn-io{flex:1;background:var(--surface);color:var(--text2);border:1.5px solid rgba(255,255,255,0.09);border-radius:var(--pill);padding:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+
+.btn-io{flex:1;background:var(--surface);color:var(--text2);border:1.5px solid rgba(255,255,255,0.09);border-radius:var(--pill);padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+.btn-io:active{opacity:.7;transform:scale(.96)}
+
 .btn-io:active{opacity:.7}
 #importInput{display:none}
 
@@ -245,8 +248,8 @@ select option{background:var(--surface2);color:var(--text)}
   </div>
 
   <div class="io-row">
-    <button class="btn-io" onclick="exportarDados()">⬆️ Exportar</button>
-    <button class="btn-io" onclick="document.getElementById('importInput').click()">⬇️ Importar</button>
+    .btn-io{flex:1;background:var(--surface);color:var(--text2);border:1.5px solid rgba(255,255,255,0.09);border-radius:var(--pill);padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+.btn-io:active{opacity:.7;transform:scale(.96)}
     <input type="file" id="importInput" accept=".json" onchange="importarDados(event)">
   </div>
 
