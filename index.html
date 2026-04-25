@@ -141,7 +141,7 @@ input:focus,select:focus{border-color:var(--accent)}
 
   <div class="tabs">
     <button class="tab active" id="tabMedsBtn" onclick="showTab('meds')">Meus remédios</button>
-    <button class="tab" id="tabHistBtn" onclick="showTab('history')">Histórico</button>
+    <button class="tab" id="tabHistBtn" onclick="showTab('history')">Já tomei</button>
   </div>
 
   <div class="content" id="contentMeds">
@@ -354,8 +354,28 @@ function renderMeds() {
 
   const sorted = [...meds].sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
 
-  list.innerHTML = sorted.map(med => {
-    const allTaken = (med.times || []).length > 0 && (med.times || []).every(t => takenToday[`${med.id}_${t}`]);
+  // Separate pending and fully-taken meds
+  const pendingMeds = sorted.filter(med => {
+    const times = med.times || [];
+    return times.length === 0 || !times.every(t => takenToday[`${med.id}_${t}`]);
+  });
+  const takenMeds = sorted.filter(med => {
+    const times = med.times || [];
+    return times.length > 0 && times.every(t => takenToday[`${med.id}_${t}`]);
+  });
+
+  let takenBanner = '';
+  if (takenMeds.length > 0) {
+    takenBanner = `<div style="text-align:center;margin-bottom:16px;margin-top:4px">
+      <button onclick="showTab('history')" style="background:rgba(0,200,150,0.15);color:var(--accent);border:1px solid rgba(0,200,150,0.3);border-radius:var(--pill);padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer">
+        ✅ ${takenMeds.length} remédio${takenMeds.length > 1 ? 's' : ''} tomado${takenMeds.length > 1 ? 's' : ''} hoje → ver em "Já tomei"
+      </button>
+    </div>`;
+  }
+
+  list.innerHTML = takenBanner + (pendingMeds.length === 0
+    ? '<div class="empty"><div>🎉</div><h3>Tudo em dia!</h3><p>Todos os remédios de hoje já foram tomados.</p></div>'
+    : pendingMeds.map(med => {
     const nowMins = (() => { const [h,m] = nowHHMM().split(':').map(Number); return h*60+m; })();
     const timesHtml = (med.times || []).map(t => {
       const taken = takenToday[`${med.id}_${t}`];
@@ -368,11 +388,11 @@ function renderMeds() {
 <div class="card-top"><div class="card-name">${esc(med.name)}</div><div class="card-dose">${esc(med.dose)}</div></div>
 ${timesHtml ? `<div class="card-times" style="align-items:center">${timesHtml}${notesHtml}</div>` : `<div style="font-size:12px;color:var(--text3);margin-top:8px">Sem horários definidos${med.notes ? ' · ' + esc(med.notes) : ''}</div>`}
 <div class="card-actions">
-<button class="btn-taken" onclick="marcarTomado('${med.id}')" ${allTaken ? 'disabled' : ''}>${allTaken ? '✓ Tudo tomado' : '✓ Marcar tomado'}</button>
+<button class="btn-taken" onclick="marcarTomado('${med.id}')">✓ Marcar tomado</button>
 <button class="btn-edit" onclick="openModal('${med.id}')">Editar</button>
 <button class="btn-del" onclick="deleteMed('${med.id}')">Remover</button>
 </div></div>`;
-  }).join('');
+  }).join(''));
 }
 
 function marcarTomado(id) {
@@ -387,23 +407,28 @@ function marcarTomado(id) {
     if (!takenToday[chave]) { takenToday[chave] = new Date().toISOString(); horarioMarcado = 'agora'; }
   } else {
     const agoraMinutes = parseInt(agora.split(':')[0]) * 60 + parseInt(agora.split(':')[1]);
-    let menorDiferenca = Infinity, melhorHorario = null;
-    for (const t of times) {
-      if (takenToday[`${id}_${t}`]) continue;
+    const pendentes = times.filter(t => !takenToday[`${id}_${t}`]);
+    if (!pendentes.length) return; // tudo já tomado
+
+    // Prioridade 1: horários atrasados (vermelho) — pega o mais cedo não tomado
+    const atrasados = pendentes.filter(t => {
       const [th, tm] = t.split(':').map(Number);
-      const tMinutes = th * 60 + tm;
-      let diff = tMinutes - agoraMinutes;
-      if (diff >= 0 && diff < menorDiferenca) { menorDiferenca = diff; melhorHorario = t; }
-    }
-    if (melhorHorario) {
-      takenToday[`${id}_${melhorHorario}`] = new Date().toISOString();
-      horarioMarcado = melhorHorario;
-    } else if (!times.some(t => !takenToday[`${id}_${t}`])) {
-      return;
+      return (th * 60 + tm) <= agoraMinutes;
+    });
+    if (atrasados.length) {
+      horarioMarcado = atrasados[0]; // já estão ordenados
     } else {
-      for (const t of times) {
-        if (!takenToday[`${id}_${t}`]) { takenToday[`${id}_${t}`] = new Date().toISOString(); horarioMarcado = t; break; }
+      // Prioridade 2: próximo horário futuro mais próximo
+      let menorDiferenca = Infinity, melhorHorario = null;
+      for (const t of pendentes) {
+        const [th, tm] = t.split(':').map(Number);
+        const diff = (th * 60 + tm) - agoraMinutes;
+        if (diff < menorDiferenca) { menorDiferenca = diff; melhorHorario = t; }
       }
+      horarioMarcado = melhorHorario;
+    }
+    if (horarioMarcado) {
+      takenToday[`${id}_${horarioMarcado}`] = new Date().toISOString();
     }
   }
 
@@ -444,18 +469,46 @@ function closeConfirm() { document.getElementById('confirmOverlay').classList.re
 
 function renderHistory() {
   const list = document.getElementById('histList');
+  const hojeISO = new Date().toISOString().slice(0,10);
+
+  // Today's taken medications (non-missed, today)
+  const hojeTomados = history.filter(h => !h.missed && h.dataReferencia === hojeISO);
+  // Past history (older than today or missed)
+  const passado = history.filter(h => h.dataReferencia !== hojeISO || h.missed);
+
   if (!history.length) {
-    list.innerHTML = '<div class="empty"><div>📋</div><h3>Histórico vazio</h3><p>Aqui aparecerá o registro de remédios tomados.</p></div>';
+    list.innerHTML = '<div class="empty"><div>📋</div><h3>Nenhum remédio tomado ainda</h3><p>Os remédios que você marcar como tomados aparecerão aqui.</p></div>';
     return;
   }
-  const btnLimpar = `<div style="text-align:right;margin-bottom:12px"><button class="btn-edit" onclick="openClearHistoryConfirm()" style="background:rgba(224,85,85,0.2);color:var(--danger)">🗑️ Limpar todo histórico</button></div>`;
-  list.innerHTML = btnLimpar + history.slice(0, 100).map(h => {
-    const horariosStr = (h.horarios && h.horarios.length) ? h.horarios.map(fmtHora).join(', ') : (h.ultimoHorario ? fmtHora(h.ultimoHorario) : 'tomado');
-    if (h.missed) {
-      return `<div class="hist-item missed"><div class="hist-dot missed"></div><div class="hist-info"><div class="hist-name">⚠️ ${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · Não tomado: ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel}</div></div>`;
-    }
-    return `<div class="hist-item"><div class="hist-dot"></div><div class="hist-info"><div class="hist-name">${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div></div>`;
-  }).join('');
+
+  let html = '';
+
+  // Today's taken meds
+  if (hojeTomados.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:10px;margin-top:4px">HOJE</div>`;
+    html += hojeTomados.map(h => {
+      const horariosStr = (h.horarios && h.horarios.length) ? h.horarios.map(fmtHora).join(', ') : (h.ultimoHorario ? fmtHora(h.ultimoHorario) : 'tomado');
+      return `<div class="hist-item" style="border:1px solid rgba(0,200,150,0.2)"><div class="hist-dot"></div><div class="hist-info"><div class="hist-name">✅ ${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · ${horariosStr}</div></div><div class="hist-time">Hoje</div></div>`;
+    }).join('');
+  }
+
+  // Older history
+  if (passado.length) {
+    if (hojeTomados.length) html += `<div style="font-size:12px;font-weight:700;color:var(--text3);letter-spacing:1px;margin:16px 0 10px">HISTÓRICO</div>`;
+    const btnLimpar = `<div style="text-align:right;margin-bottom:12px"><button class="btn-edit" onclick="openClearHistoryConfirm()" style="background:rgba(224,85,85,0.2);color:var(--danger)">🗑️ Limpar todo histórico</button></div>`;
+    html += btnLimpar;
+    html += passado.slice(0, 100).map(h => {
+      const horariosStr = (h.horarios && h.horarios.length) ? h.horarios.map(fmtHora).join(', ') : (h.ultimoHorario ? fmtHora(h.ultimoHorario) : 'tomado');
+      if (h.missed) {
+        return `<div class="hist-item missed"><div class="hist-dot missed"></div><div class="hist-info"><div class="hist-name">⚠️ ${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · Não tomado: ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel}</div></div>`;
+      }
+      return `<div class="hist-item"><div class="hist-dot"></div><div class="hist-info"><div class="hist-name">${esc(h.medName)}</div><div class="hist-detail">${esc(h.dose)} · ${horariosStr}</div></div><div class="hist-time">${h.dataLegivel || new Date(h.takenAt).toLocaleDateString('pt-BR')}</div></div>`;
+    }).join('');
+  } else if (!hojeTomados.length) {
+    html = '<div class="empty"><div>📋</div><h3>Nenhum remédio tomado ainda</h3><p>Os remédios que você marcar como tomados aparecerão aqui.</p></div>';
+  }
+
+  list.innerHTML = html;
 }
 
 function openClearHistoryConfirm() { document.getElementById('confirmClearHistoryOverlay').classList.add('open'); }
