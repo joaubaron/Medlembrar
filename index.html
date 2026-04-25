@@ -43,6 +43,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .chip-dot{width:7px;height:7px;border-radius:50%}
 .chip-dot.ok{background:var(--accent)}
 .chip-dot.warn{background:var(--warn)}
+.chip-dot.late{background:var(--danger)}
+.chip-time.late{color:var(--warn)}
 .card-actions{display:flex;gap:8px;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06)}
 .btn-taken{flex:1;background:none;color:white;border:none;border-radius:var(--pill);padding:4px;font-size:13px;font-weight:600;cursor:pointer}
 .btn-taken:disabled{opacity:0.5;cursor:default}
@@ -313,7 +315,13 @@ function renderMeds() {
 
   list.innerHTML = sorted.map(med => {
     const allTaken = (med.times || []).length > 0 && (med.times || []).every(t => takenToday[`${med.id}_${t}`]);
-    const timesHtml = (med.times || []).map(t => `<div class="time-chip${takenToday[`${med.id}_${t}`] ? ' taken' : ''}"><span class="chip-dot ok"></span>${fmtHora(t)}</div>`).join('');
+    const nowMins = (() => { const [h,m] = nowHHMM().split(':').map(Number); return h*60+m; })();
+    const timesHtml = (med.times || []).map(t => {
+      const taken = takenToday[`${med.id}_${t}`];
+      const [h,m] = t.split(':').map(Number);
+      const late = !taken && (h*60+m) < nowMins;
+      return `<div class="time-chip${taken ? ' taken' : ''}"><span class="chip-dot ${late ? 'late' : 'ok'}"></span><span class="chip-time${late ? ' late' : ''}">${fmtHora(t)}</span></div>`;
+    }).join('');
     const notesHtml = med.notes ? `<span style="font-size:13px;color:var(--text2);margin-left:8px;align-self:center">${esc(med.notes)}</span>` : '';
     return `<div class="med-card">
 <div class="card-top"><div class="card-name">${esc(med.name)}</div><div class="card-dose">${esc(med.dose)}</div></div>
