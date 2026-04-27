@@ -352,7 +352,7 @@ const VAPID_PUBLIC_KEY = 'BO5DP1GQXi-qWd2E_rxNjEcqm00zVnZTY7x_m0435XEPuORtnAee5Q
 const OS_APP_ID  = '55262a6b-45b7-4638-995d-8086c3f5e02c';
 const OS_API_KEY = 'os_v2_app_kutcu22fw5ddrgk5qcdmh5pafrtfbbyoco7e3oevnh5ea6ynpvmurprdzjuaut46esb4sg53t27yd7x5ti4hpfwk26vzukgaksyf7uq';
 
-// Inicializa SDK OneSignal
+// Inicializa SDK OneSignal e registra o dispositivo
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
   await OneSignal.init({
@@ -363,13 +363,17 @@ OneSignalDeferred.push(async function(OneSignal) {
   });
 });
 
-// Obtém o Player ID (External User ID) do OneSignal
+// Obtém o Player ID — aguarda até 15s pelo SDK registrar o dispositivo
 async function getOSPlayerId() {
-  try {
-    if (!window.OneSignal) return null;
-    const id = await window.OneSignal.User.PushSubscription.id;
-    return id || null;
-  } catch(e) { return null; }
+  for (let i = 0; i < 30; i++) {
+    try {
+      const id = window.OneSignal?.User?.PushSubscription?.id;
+      if (id) return id;
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 500));
+  }
+  console.warn('[OneSignal] Player ID não disponível após 15s');
+  return null;
 }
 
 // Agenda notificações de um remédio no OneSignal (próximos 30 dias)
@@ -418,6 +422,9 @@ async function osAgendarRemedio(med) {
   const stored = JSON.parse(localStorage.getItem('os_notif_ids') || '{}');
   stored[med.id] = notifIds;
   localStorage.setItem('os_notif_ids', JSON.stringify(stored));
+  console.log(`[OneSignal] ${notifIds.length} notificações agendadas para "${med.name}"`);
+  if (notifIds.length > 0) showToast(`🔔 ${notifIds.length} alertas agendados no servidor`);
+  else showToast('⚠️ Não foi possível agendar alertas no servidor');
 }
 
 // Cancela todas as notificações agendadas de um remédio
@@ -878,26 +885,24 @@ function closeBlockedModal(){ document.getElementById('blockedModal').classList.
 async function solicitarPermissaoPush(){
   if(!('Notification' in window))return;
   if(Notification.permission==='denied'){openBlockedModal();return;}
-  if(Notification.permission==='granted'){await inscreverPush();agendarLembretesNativos();return;}
-  const r=await Notification.requestPermission();
-  if(r==='granted'){
-    await inscreverPush();
+
+  // Deixa o OneSignal pedir permissão — ele registra o dispositivo automaticamente
+  try {
+    await window.OneSignal.Notifications.requestPermission();
+  } catch(e) {}
+
+  // Aguarda o OneSignal registrar e confirma
+  const id = await getOSPlayerId();
+  if(Notification.permission==='granted' && id){
     document.getElementById('btnNotif').classList.add('granted');
     document.getElementById('notifBanner').classList.add('hidden');
-    const reg=await navigator.serviceWorker.ready;
-    reg.showNotification('✅ Alertas ativados!',{body:'Você receberá lembretes nos horários cadastrados.',icon:'./icons/icon-192.png'});
     showToast('🔔 Alertas ativados!');
     agendarLembretesNativos();
+    // Reagenda remédios existentes agora que temos Player ID
+    for(const med of meds){ await osAgendarRemedio(med); }
   }
 }
 
-async function inscreverPush(){
-  if(!('serviceWorker' in navigator))return;
-  const reg=await navigator.serviceWorker.ready;
-  const ex=await reg.pushManager.getSubscription();
-  if(ex)return;
-  try{await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:VAPID_PUBLIC_KEY});}catch(e){console.error('Erro push:',e);}
-}
 
 async function registrarServiceWorker(){
   if(!('serviceWorker' in navigator))return;
