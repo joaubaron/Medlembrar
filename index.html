@@ -7,6 +7,7 @@
 <meta name="description" content="Dose Certa — Controle de remédios com alertas">
 <link rel="manifest" href="./manifest.json">
 <title>Dose Certa</title>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -346,6 +347,95 @@ select option{background:var(--surface2);color:var(--text)}
 
 <script>
 const VAPID_PUBLIC_KEY = 'BO5DP1GQXi-qWd2E_rxNjEcqm00zVnZTY7x_m0435XEPuORtnAee5QzdfJwQJOI1Alk6I4rKFh_CMHCh2qUgU7o';
+
+// ── OneSignal ─────────────────────────────────────
+const OS_APP_ID  = '55262a6b-45b7-4638-995d-8086c3f5e02c';
+const OS_API_KEY = 'os_v2_app_kutcu22fw5ddrgk5qcdmh5pafrtfbbyoco7e3oevnh5ea6ynpvmurprdzjuaut46esb4sg53t27yd7x5ti4hpfwk26vzukgaksyf7uq';
+
+// Inicializa SDK OneSignal
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: OS_APP_ID,
+    safari_web_id: 'web.onesignal.auto.110555e6-7aae-4d44-9896-bfe7a2b1c987',
+    notifyButton: { enable: false },
+    allowLocalhostAsSecureOrigin: true,
+  });
+});
+
+// Obtém o Player ID (External User ID) do OneSignal
+async function getOSPlayerId() {
+  try {
+    if (!window.OneSignal) return null;
+    const id = await window.OneSignal.User.PushSubscription.id;
+    return id || null;
+  } catch(e) { return null; }
+}
+
+// Agenda notificações de um remédio no OneSignal (próximos 30 dias)
+async function osAgendarRemedio(med) {
+  if (!med.times?.length || med.freq === 'asneeded') return;
+  const playerId = await getOSPlayerId();
+  if (!playerId) return;
+
+  const notifIds = [];
+  const agora = new Date();
+
+  for (let dia = 0; dia < 30; dia++) {
+    for (const horario of med.times) {
+      const [h, m] = horario.split(':').map(Number);
+      const dt = new Date(agora);
+      dt.setDate(dt.getDate() + dia);
+      dt.setHours(h, m, 0, 0);
+      if (dt <= agora) continue; // pula horários já passados hoje
+
+      const isoTime = dt.toISOString().replace('.000', '');
+      try {
+        const res = await fetch('https://onesignal.com/api/v1/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Key ${OS_API_KEY}`
+          },
+          body: JSON.stringify({
+            app_id: OS_APP_ID,
+            include_subscription_ids: [playerId],
+            contents: { pt: `${med.name} — ${med.dose}`, en: `${med.name} — ${med.dose}` },
+            headings: { pt: '💊 Hora do remédio!', en: '💊 Time for your medication!' },
+            send_after: isoTime,
+            data: { medId: med.id, horario },
+            ios_badgeType: 'Increase',
+            ios_badgeCount: 1,
+          })
+        });
+        const data = await res.json();
+        if (data.id) notifIds.push(data.id);
+      } catch(e) { /* ignora erro individual */ }
+    }
+  }
+
+  // Salva os IDs agendados para poder cancelar depois
+  const stored = JSON.parse(localStorage.getItem('os_notif_ids') || '{}');
+  stored[med.id] = notifIds;
+  localStorage.setItem('os_notif_ids', JSON.stringify(stored));
+}
+
+// Cancela todas as notificações agendadas de um remédio
+async function osCancelarRemedio(medId) {
+  const stored = JSON.parse(localStorage.getItem('os_notif_ids') || '{}');
+  const ids = stored[medId] || [];
+  for (const nid of ids) {
+    try {
+      await fetch(`https://onesignal.com/api/v1/notifications/${nid}?app_id=${OS_APP_ID}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Key ${OS_API_KEY}` }
+      });
+    } catch(e) { /* ignora */ }
+  }
+  delete stored[medId];
+  localStorage.setItem('os_notif_ids', JSON.stringify(stored));
+}
+
 let meds = [], history = [], takenToday = {};
 let editingId = null, tempTimes = [], currentTab = 'meds';
 
@@ -669,6 +759,7 @@ function deleteMed(id) {
   nb.className='confirm-yes';
   nb.textContent='Remover';
   nb.onclick=()=>{
+    osCancelarRemedio(id);
     meds=meds.filter(m=>m.id!==id);
     history=history.filter(h=>h.medId!==id);
     for(const k of Object.keys(takenToday))if(k.startsWith(id+'_'))delete takenToday[k];
@@ -723,8 +814,14 @@ function saveMed(){
     notes:document.getElementById('fNotes').value.trim(),
     createdAt:editingId?(meds.find(m=>m.id===editingId)||{}).createdAt||new Date().toISOString():new Date().toISOString()
   };
-  if(editingId)meds=meds.map(m=>m.id===editingId?med:m);
-  else meds=[...meds,med];
+  if(editingId) {
+    // Cancela notificações antigas antes de reagendar
+    osCancelarRemedio(editingId).then(() => osAgendarRemedio(med));
+    meds=meds.map(m=>m.id===editingId?med:m);
+  } else {
+    meds=[...meds,med];
+    osAgendarRemedio(med);
+  }
   save();closeModal();renderAll();
   showToast(editingId?'✅ Remédio atualizado':'✅ Remédio adicionado');
 }
