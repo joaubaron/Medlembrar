@@ -626,7 +626,7 @@ function renderHistory() {
       const horariosHtml=horarios.map(t=>`
         <div class="hist-time-row">
           <div class="hist-time-chip">${fmtHora(t)}</div>
-          <button class="btn-undo-hist" onclick="desfazerDoseHistorico('${h.medId}','${t}')">↩ Desfazer</button>
+
         </div>`).join('');
       return `<div class="hist-item today-item">
         <div class="hist-name">✅ ${esc(h.medName)}</div>
