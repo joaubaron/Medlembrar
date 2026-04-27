@@ -3,7 +3,7 @@
 // O loop principal de alertas roda no index.html (foreground).
 // SW cuida de: cache, sync events, e notificações quando acionado.
 
-const CACHE_VERSION = '27.04.2026-1023';
+const CACHE_VERSION = '27.04.2026-1144';
 const CACHE_NAME    = `dosecerta-${CACHE_VERSION}`;
 const ASSETS = [
   './index.html',
