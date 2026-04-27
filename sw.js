@@ -2,7 +2,7 @@
 // Responsabilidade: cache, clique em notificação, e comunicação com o app.
 // Notificações agendadas são gerenciadas pelo OneSignal (OneSignalSDKWorker.js).
 
-const CACHE_VERSION = '27.04.2026-1739';
+const CACHE_VERSION = '27.04.2026-1807';
 const CACHE_NAME    = `dosecerta-${CACHE_VERSION}`;
 const ASSETS = [
   './index.html',
