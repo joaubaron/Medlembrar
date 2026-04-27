@@ -1,4 +1,4 @@
-const CACHE_VERSION = '27.04.2026-0945';
+const CACHE_VERSION = '27.04.2026-0952';
 const CACHE_NAME = `medlembrar-${CACHE_VERSION}`;
 const ASSETS = [
 './index.html',

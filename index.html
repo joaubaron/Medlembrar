@@ -625,8 +625,7 @@ function renderHistory() {
       const horarios=h.horarios&&h.horarios.length?h.horarios:(h.ultimoHorario?[h.ultimoHorario]:[]);
       const horariosHtml=horarios.map(t=>`
         <div class="hist-time-row">
-          <div class="hist-time-chip">${fmtHora(t)}</div>
-
+          <div class="hist-time-chip" style="cursor:pointer;text-decoration:line-through;opacity:0.7" onclick="desfazerDoseHistorico('${h.medId}','${t}')">${fmtHora(t)}</div>
         </div>`).join('');
       return `<div class="hist-item today-item">
         <div class="hist-name">✅ ${esc(h.medName)}</div>
