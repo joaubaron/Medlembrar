@@ -361,6 +361,7 @@ function save() {
   localStorage.setItem('dosecerta_hist',  JSON.stringify(history.slice(0,500)));
   localStorage.setItem('dosecerta_taken', JSON.stringify(takenToday));
   enviarMedsParaServiceWorker();
+  if(typeof agendarLembretesNativos==='function') agendarLembretesNativos();
 }
 
 // ── Day rollover ──────────────────────────────────
@@ -780,7 +781,7 @@ function closeBlockedModal(){ document.getElementById('blockedModal').classList.
 async function solicitarPermissaoPush(){
   if(!('Notification' in window))return;
   if(Notification.permission==='denied'){openBlockedModal();return;}
-  if(Notification.permission==='granted'){await inscreverPush();return;}
+  if(Notification.permission==='granted'){await inscreverPush();agendarLembretesNativos();return;}
   const r=await Notification.requestPermission();
   if(r==='granted'){
     await inscreverPush();
@@ -789,8 +790,10 @@ async function solicitarPermissaoPush(){
     const reg=await navigator.serviceWorker.ready;
     reg.showNotification('✅ Alertas ativados!',{body:'Você receberá lembretes nos horários cadastrados.',icon:'./icons/icon-192.png'});
     showToast('🔔 Alertas ativados!');
+    agendarLembretesNativos();
   }
 }
+
 async function inscreverPush(){
   if(!('serviceWorker' in navigator))return;
   const reg=await navigator.serviceWorker.ready;
@@ -798,46 +801,191 @@ async function inscreverPush(){
   if(ex)return;
   try{await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:VAPID_PUBLIC_KEY});}catch(e){console.error('Erro push:',e);}
 }
+
 async function registrarServiceWorker(){
   if(!('serviceWorker' in navigator))return;
   return await navigator.serviceWorker.register('./sw.js');
 }
+
+// ── Envio de dados para SW ────────────────────────
 function enviarMedsParaServiceWorker(){
   if(!navigator.serviceWorker?.controller)return;
   try{
-    navigator.serviceWorker.controller.postMessage({type:'UPDATE_MEDS_DATA',data:{meds:meds.map(({id,name,dose,times})=>({id,name,dose,times})),takenToday}});
-    navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_ALARMS'});
+    navigator.serviceWorker.controller.postMessage({
+      type:'UPDATE_MEDS_DATA',
+      data:{meds:meds.map(({id,name,dose,times})=>({id,name,dose,times})),takenToday}
+    });
   }catch(e){}
 }
+
+// Listener para SW pedir dados
 if(navigator.serviceWorker){
   navigator.serviceWorker.addEventListener('message',async e=>{
     if(e.data?.type==='GET_MEDS_DATA'&&e.ports?.[0])
       e.ports[0].postMessage({meds:meds.map(({id,name,dose,times})=>({id,name,dose,times})),takenToday});
   });
 }
+
+// ── SISTEMA DE ALERTAS PRINCIPAL (foreground) ─────
+// Roda no index.html; confiável porque não depende do SW acordar sozinho.
+// Verifica a cada 30s. Dispara notificação 10min antes E no horário.
+
+const ALERTA_ANTECIPADO_MIN = 10; // minutos antes para aviso prévio
+const JANELA_NOTIF_MIN      = 6;  // janela após o horário para ainda notificar
+
+function chaveNotifLS(medId, horario, tipo, dataStr){
+  // tipo: 'pre' (aviso antecipado) | 'now' (no horário)
+  return `notif_${tipo}_${medId}_${horario}_${dataStr}`;
+}
+
+function jaNotificouLS(chave){
+  return localStorage.getItem(chave) === '1';
+}
+
+function marcarNotificouLS(chave){
+  localStorage.setItem(chave, '1');
+  // auto-limpar no dia seguinte não é necessário; cleanTakenToday cuida dos resets
+}
+
+async function dispararNotificacao(titulo, corpo, tag){
+  if(Notification.permission !== 'granted') return;
+  try{
+    if('serviceWorker' in navigator){
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(titulo, {
+        body: corpo,
+        icon: './icons/icon-192.png',
+        badge: './icons/icon-192.png',
+        vibrate: [200, 100, 200, 100, 200],
+        requireInteraction: true,
+        tag,
+        renotify: false,
+        silent: false
+      });
+    } else {
+      new Notification(titulo, {body: corpo, icon:'./icons/icon-192.png', tag});
+    }
+  }catch(err){console.warn('Erro ao disparar notificação:', err);}
+}
+
+async function verificarAlertas(){
+  if(Notification.permission !== 'granted') return;
+
+  const agora = new Date();
+  const dataStr = agora.toLocaleDateString('pt-BR'); // dd/mm/aaaa
+  const nowM = agora.getHours() * 60 + agora.getMinutes();
+
+  for(const med of meds){
+    if(med.freq === 'asneeded') continue;
+    for(const horario of (med.times || [])){
+      const [h, m] = horario.split(':').map(Number);
+      const tMin = h * 60 + m;
+      const key  = `${med.id}_${horario}`;
+
+      // Se já foi tomado hoje, não alertar
+      if(takenToday[key]) continue;
+
+      // ── Aviso antecipado (10 min antes) ──────────
+      const diffParaHorario = tMin - nowM;
+      if(diffParaHorario > 0 && diffParaHorario <= ALERTA_ANTECIPADO_MIN){
+        const chave = chaveNotifLS(med.id, horario, 'pre', dataStr);
+        if(!jaNotificouLS(chave)){
+          marcarNotificouLS(chave);
+          await dispararNotificacao(
+            `⏰ Em ${diffParaHorario} min — ${med.name}`,
+            `Prepare-se: ${med.dose} às ${horario}`,
+            `pre_${med.id}_${horario}`
+          );
+        }
+      }
+
+      // ── Alerta no horário (janela de 0 a JANELA_NOTIF_MIN min depois) ──
+      if(nowM >= tMin && nowM <= tMin + JANELA_NOTIF_MIN){
+        const chave = chaveNotifLS(med.id, horario, 'now', dataStr);
+        if(!jaNotificouLS(chave)){
+          marcarNotificouLS(chave);
+          await dispararNotificacao(
+            `💊 Hora do remédio!`,
+            `${med.name} — ${med.dose} às ${horario}`,
+            `now_${med.id}_${horario}`
+          );
+        }
+      }
+    }
+  }
+}
+
+// ── Agendamento nativo (Notification Triggers API — Chrome Android) ──────
+// Registra alarmes no SW para quando o app estiver fechado.
+// Se o browser não suportar, o SW usa periodicsync como fallback.
+async function agendarLembretesNativos(){
+  if(!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.ready;
+  
+  // Enviar dados atualizados para o SW antes de pedir agendamento
+  enviarMedsParaServiceWorker();
+
+  // Registrar periodic sync (fallback mais amplo — funciona em Android Chrome)
+  if('periodicSync' in reg){
+    try{
+      const status = await navigator.permissions.query({name:'periodic-background-sync'});
+      if(status.state === 'granted'){
+        await reg.periodicSync.register('medication-check', {minInterval: 60 * 1000}); // 1 min
+      }
+    }catch(e){}
+  }
+
+  // Background sync para quando voltar online/acordar
+  if('sync' in reg){
+    try{ await reg.sync.register('medication-sync'); }catch(e){}
+  }
+}
+
+// ── Loop principal de verificação (foreground) ────
+let _alertLoop = null;
+function iniciarLoopAlertas(){
+  if(_alertLoop) clearInterval(_alertLoop);
+  verificarAlertas(); // imediato
+  _alertLoop = setInterval(verificarAlertas, 30 * 1000); // a cada 30s
+}
+
+// Reativar ao voltar para o app
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden&&navigator.serviceWorker?.controller){
-    navigator.serviceWorker.controller.postMessage({type:'CHECK_MEDS'});
+  if(!document.hidden){
+    verificarAlertas();
     renderAll();
   }
 });
 
 // ── Init ──────────────────────────────────────────
 (async function init(){
-  load();updateClock();setInterval(updateClock,1000);
-  setInterval(()=>renderMeds(),60000);
+  load();
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(renderMeds, 60000); // refresh visual a cada 1 min
+
   await registrarServiceWorker();
+
   if(navigator.serviceWorker){
     await navigator.serviceWorker.ready;
-    if(!navigator.serviceWorker.controller){setTimeout(()=>window.location.reload(),300);return;}
+    if(!navigator.serviceWorker.controller){
+      setTimeout(()=>window.location.reload(), 300);
+      return;
+    }
   }
+
   renderAll();
-  if(navigator.serviceWorker?.controller){
-    enviarMedsParaServiceWorker();
-    navigator.serviceWorker.controller.postMessage({type:'CHECK_MEDS'});
+  enviarMedsParaServiceWorker();
+
+  // Iniciar loop de alertas foreground
+  iniciarLoopAlertas();
+
+  // Registrar sync / periodicSync no SW
+  agendarLembretesNativos();
+
+  if(Notification.permission==='granted'){
+    document.getElementById('btnNotif')?.classList.add('granted');
   }
-  setInterval(()=>{if(navigator.serviceWorker?.controller)navigator.serviceWorker.controller.postMessage({type:'CHECK_MEDS'});},15*60*1000);
-  if(Notification.permission==='granted')document.getElementById('btnNotif')?.classList.add('granted');
 })();
 </script>
 </body>
