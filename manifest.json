@@ -1,26 +1,23 @@
 {
-  "name": "DoseCerta",
+  "name": "Dose Certa",
   "short_name": "DoseCerta",
-  "description": "Controle de remédios com alertas mesmo com app fechado",
-  "start_url": ".",
-  "scope": ".",
+  "start_url": "./index.html",
   "display": "standalone",
+  "theme_color": "#0a1628",
+  "background_color": "#09152a",
   "orientation": "portrait",
-  "background_color": "#f2fafc",
-  "theme_color": "#f2fafc",
-  "lang": "pt-BR",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "./icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
